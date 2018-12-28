@@ -1,0 +1,97 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<ClassDiagram MajorVersion="1" MinorVersion="1">
+  <Class Name="DataAccessLayer.DataLayerBase">
+    <Position X="0.5" Y="1.5" Width="2.5" />
+    <Members>
+      <Field Name="_command" Hidden="true" />
+      <Field Name="_commandType" Hidden="true" />
+      <Field Name="_connection" Hidden="true" />
+      <Field Name="_connectionString" Hidden="true" />
+      <Event Name="_dataBaseErrorEventHandler" Hidden="true" />
+      <Field Name="_dataBaseType" Hidden="true" />
+      <Field Name="_defaultCommandType" Hidden="true" />
+      <Field Name="_disposed" Hidden="true" />
+      <Field Name="_error" Hidden="true" />
+      <Field Name="_inNotReconnected" Hidden="true" />
+      <Field Name="_keepConnection" Hidden="true" />
+      <Field Name="_lastError" Hidden="true" />
+      <Field Name="_mySQLReOpen" Hidden="true" />
+      <Field Name="_parameters" Hidden="true" />
+      <Field Name="_paramPrefix" Hidden="true" />
+      <Field Name="_propertyBindingFlag" Hidden="true" />
+      <Field Name="_reRaiseException" Hidden="true" />
+      <Field Name="_sql" Hidden="true" />
+      <Field Name="_transaction" Hidden="true" />
+      <Method Name="~DataLayerBase" Hidden="true" />
+      <Method Name="AddParameters" Hidden="true" />
+      <Method Name="AddParametersCommand" Hidden="true" />
+      <Method Name="BuildErrorMessage" Hidden="true" />
+      <Method Name="ConvertToText" Hidden="true" />
+      <Property Name="Disposed" Hidden="true" />
+    </Members>
+    <TypeIdentifier>
+      <HashCode>BAKECERDIDGEZAWAQBAQREABgAAToQEJALQABhCCJQA=</HashCode>
+      <FileName>DataLayerBase.cs</FileName>
+    </TypeIdentifier>
+    <Lollipop Position="0.1" />
+  </Class>
+  <Class Name="DataAccessLayer.DataLayerFirebird" Collapsed="true">
+    <Position X="3.5" Y="5.5" Width="1.75" />
+    <Members>
+      <Field Name="_connection" Hidden="true" />
+    </Members>
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAACAAAAEAAAAAQAAAAAAQAAAAAAAAAAAABAA=</HashCode>
+      <FileName>DataLayerFirebird.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="DataAccessLayer.DataLayerPGSql" Collapsed="true">
+    <Position X="3.5" Y="4.25" Width="1.75" />
+    <Members>
+      <Field Name="_connection" Hidden="true" />
+    </Members>
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAACAAAAEAAAAAQAAAAAAQAAAAAAAAAAAABAA=</HashCode>
+      <FileName>DataLayerPgSQL.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="DataAccessLayer.DataLayerMSSql" Collapsed="true">
+    <Position X="3.5" Y="1.75" Width="1.75" />
+    <Members>
+      <Field Name="_connection" Hidden="true" />
+    </Members>
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAACAAAAEAAAAAQAAAAAAQAAAAAAAAAAAABAA=</HashCode>
+      <FileName>DataLayerMsSQL.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="DataAccessLayer.DataLayerOracle" Collapsed="true">
+    <Position X="3.5" Y="3" Width="1.75" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAACAAAAEAAAAAQAAAAAAQAAAAAAAAAAAABAA=</HashCode>
+      <FileName>DataLayerOracle.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="DataAccessLayer.DataLayerSQLite" Collapsed="true">
+    <Position X="3.5" Y="6.75" Width="1.75" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAACAAAAEAAAAAQAAAAAAQAAAAAAAAAAAABAA=</HashCode>
+      <FileName>DataLayerSqLite.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="DataAccessLayer.DataLayerSqlServerCe" Collapsed="true">
+    <Position X="3.5" Y="8" Width="1.75" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAACAAAAEAAAAAQAAAAAAQAAAAAAAAAAAABAA=</HashCode>
+      <FileName>DataLayerSqlServerCe.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Interface Name="DataAccessLayer.IDataLayer" Collapsed="true">
+    <Position X="0.5" Y="0.5" Width="2.25" />
+    <TypeIdentifier>
+      <HashCode>AAKAAAABIACAYAGAQBAAAEABAAATgAABAKQAAACAIAA=</HashCode>
+      <FileName>IDataLayer.cs</FileName>
+    </TypeIdentifier>
+  </Interface>
+  <Font Name="Tahoma" Size="8.25" />
+</ClassDiagram>
