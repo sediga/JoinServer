@@ -30,7 +30,12 @@ namespace JoinServer.Models
 
         [DataType(DataType.Text)]
         [Display(Name = "description")]
-        public string description { get; set; }
+        public string Description { get; set; }
+
+        [DataType(DataType.Text)]
+        [Display(Name = "imagepath")]
+        public string ImagePath { get; set; }
+
     }
 
     public class Activity

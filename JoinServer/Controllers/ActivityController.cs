@@ -6,6 +6,8 @@ using System;
 using System.Collections.Generic;
 using System.Configuration;
 using System.Data;
+using System.Drawing;
+using System.IO;
 using System.Linq;
 using System.Net;
 using System.Net.Http;
@@ -52,27 +54,6 @@ namespace JoinServer.Controllers
             return locations;
         }
 
-        //[Route("Activity/{activity}")]
-        public HttpResponseMessage GetImage([FromUri] string activity)
-        {
-            HttpResponseMessage result = new HttpResponseMessage(HttpStatusCode.OK);
-            try
-            {
-                //Activity activity = JsonConvert.DeserializeObject<Activity>(value);
-                using (IDataLayer dataLayer = DataLayer.GetInstance(DatabaseTypes.MSSql, false))
-                {
-                    byte[] image = GetMachingImages(activity, dataLayer);
-                    result.Content = new ByteArrayContent(image);
-                    result.Content.Headers.ContentType = new MediaTypeHeaderValue("image/png");
-                }
-            }
-            catch (Exception ex)
-            {
-
-            }
-            return result;
-        }
-
         private static void PutAnActivity(Activity activity)
         {
             using (IDataLayer dataLayer = DataLayer.GetInstance(DatabaseTypes.MSSql, false))
@@ -99,7 +80,7 @@ namespace JoinServer.Controllers
         private static void InsertActivity(Activity activity, IDataLayer dataLayer)
         {
             dataLayer.ConnectionString = ConfigurationManager.AppSettings["ConnectionString"].ToString();
-            dataLayer.Sql = "insert into Activity values(@deviceId, @what, @when, @lat, @long, null, @description, @id)";
+            dataLayer.Sql = "insert into Activity(deviceid, what, [when], lat, long, description, id) values(@deviceId, @what, @when, @lat, @long, @description, @id)";
             dataLayer.AddParameter("@deviceId", activity.DeviceID);
             dataLayer.AddParameter("@What", activity.What);
             dataLayer.AddParameter("@when", activity.When);
@@ -125,26 +106,20 @@ namespace JoinServer.Controllers
         private List<CurrentLocation> GetMachingLocations(string activity, IDataLayer dataLayer)
         {
             dataLayer.ConnectionString = ConfigurationManager.AppSettings["ConnectionString"].ToString();
-            dataLayer.Sql = "select distinct deviceId, Lat, Long, what, description from Activity where what like '%" + activity+"%'";
+            dataLayer.Sql = "select distinct deviceId, Lat, Long, what, description, imagepath from Activity where what like '%" + activity+"%'";
             List<CurrentLocation> locations = new List<CurrentLocation>();
             foreach (DataRow row in dataLayer.ExecuteDataTable().Rows)
             {
-                locations.Add(new CurrentLocation() { DeviceID = row["deviceid"].ToString(), Lat = double.Parse(row["lat"].ToString()), Long = double.Parse(row["long"].ToString()), CurrentActivity = row["what"].ToString(), description = row["description"].ToString() });
+                locations.Add(new CurrentLocation()
+                { DeviceID = row["deviceid"].ToString(),
+                    Lat = double.Parse(row["lat"].ToString()),
+                    Long = double.Parse(row["long"].ToString()),
+                    CurrentActivity = row["what"].ToString(),
+                    Description = row["description"].ToString(),
+                    ImagePath = row["imagepath"].ToString().Split('.')[0]
+                });
             }
             return locations;
-        }
-
-        private byte[] GetMachingImages(string activity, IDataLayer dataLayer)
-        {
-            byte[] image = new byte[0];
-            dataLayer.ConnectionString = ConfigurationManager.AppSettings["ConnectionString"].ToString();
-            dataLayer.Sql = string.Format("select distinct deviceId, Lat, Long, what, description from Activity where what = '{0}'", activity);
-            DataTable dataTable = dataLayer.ExecuteDataTable();
-            if (dataTable != null && dataTable.Rows.Count > 0)
-            {
-                image = ((byte[])dataTable.Rows[0]["image"]);
-            }
-            return image;
         }
 
         // PUT api/values/5
