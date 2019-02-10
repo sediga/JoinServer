@@ -36,7 +36,7 @@ namespace JoinServer.Controllers
 
                     result = new HttpResponseMessage(HttpStatusCode.OK);
                     result.Content = new ByteArrayContent(ms.ToArray());
-                    result.Content.Headers.ContentType = new MediaTypeHeaderValue("image/png");
+                    result.Content.Headers.ContentType = new MediaTypeHeaderValue("image/png"); 
                 }
                     //}
                 }
