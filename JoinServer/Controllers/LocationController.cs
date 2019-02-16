@@ -29,7 +29,7 @@ namespace JoinServer.Controllers
 
         // POST api/values
         [Route("Location")]
-        public void PostLocation([FromBody]CurrentLocation currentLocation)
+        public void PostLocation([FromBody]CurrentActivity currentLocation)
         {
             try
             {
@@ -42,7 +42,7 @@ namespace JoinServer.Controllers
             }
         }
 
-        private static void PutCurrentLocation(CurrentLocation currentLocation)
+        private static void PutCurrentLocation(CurrentActivity currentLocation)
         {
             using (IDataLayer dataLayer = DataLayer.GetInstance(DatabaseTypes.MSSql, false))
             {
@@ -57,7 +57,7 @@ namespace JoinServer.Controllers
             }
         }
 
-        private static bool IsDeviceFound(CurrentLocation currentLocation, IDataLayer dataLayer)
+        private static bool IsDeviceFound(CurrentActivity currentLocation, IDataLayer dataLayer)
         {
             dataLayer.ConnectionString = ConfigurationManager.AppSettings["ConnectionString"].ToString();
             dataLayer.Sql = "select count(*) from CurrentLocation where deviceid = @deviceid";
@@ -65,7 +65,7 @@ namespace JoinServer.Controllers
             return ((int)dataLayer.ExecuteScalar() > 0);
         }
 
-        private static void InsertCurrentLocation(CurrentLocation currentLocation, IDataLayer dataLayer)
+        private static void InsertCurrentLocation(CurrentActivity currentLocation, IDataLayer dataLayer)
         {
             dataLayer.ConnectionString = ConfigurationManager.AppSettings["ConnectionString"].ToString();
             dataLayer.Sql = "insert into CurrentLocation values(@deviceId, @lat, @long)";
@@ -75,7 +75,7 @@ namespace JoinServer.Controllers
             dataLayer.ExecuteNonQuery();
         }
 
-        private static void UpdateCurrentLocation(CurrentLocation currentLocation, IDataLayer dataLayer)
+        private static void UpdateCurrentLocation(CurrentActivity currentLocation, IDataLayer dataLayer)
         {
             dataLayer.ConnectionString = ConfigurationManager.AppSettings["ConnectionString"].ToString();
             dataLayer.Sql = "update CurrentLocation set lat = @lat, long = @long where deviceid = @deviceid";

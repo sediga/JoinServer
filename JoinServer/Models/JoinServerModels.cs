@@ -6,7 +6,7 @@ using System.Web;
 
 namespace JoinServer.Models
 {
-    public class CurrentLocation
+    public class CurrentActivity
     {
         [Required]
         [DataType(DataType.Password)]
@@ -26,7 +26,7 @@ namespace JoinServer.Models
         [Required]
         [DataType(DataType.Text)]
         [Display(Name = "CurrentActivity")]
-        public string CurrentActivity { get; set; }
+        public string Activity { get; set; }
 
         [DataType(DataType.Text)]
         [Display(Name = "description")]
@@ -36,6 +36,9 @@ namespace JoinServer.Models
         [Display(Name = "imagepath")]
         public string ImagePath { get; set; }
 
+        [DataType(DataType.Text)]
+        [Display(Name = "activityid")]
+        public string ActivityId { get; set; }
     }
 
     public class Activity
@@ -57,12 +60,12 @@ namespace JoinServer.Models
 
         [Required]
         [DataType(DataType.Password)]
-        [Display(Name = "Lattitude")]
+        [Display(Name = "Lat")]
         public double Lat { get; set; }
 
         [Required]
         [DataType(DataType.Password)]
-        [Display(Name = "Longitude")]
+        [Display(Name = "Long")]
         public double Long { get; set; }
 
         [Required]

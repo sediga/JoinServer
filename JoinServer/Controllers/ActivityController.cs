@@ -36,9 +36,9 @@ namespace JoinServer.Controllers
         }
 
         [Route("Activity/{activity}")]
-        public List<CurrentLocation> GetActivity([FromUri] string activity)
+        public List<CurrentActivity> GetActivity([FromUri] string activity)
         {
-            List<CurrentLocation> locations = null;
+            List<CurrentActivity> locations = null;
             try
             {
                 //Activity activity = JsonConvert.DeserializeObject<Activity>(value);
@@ -65,6 +65,7 @@ namespace JoinServer.Controllers
                 //else
                 //{
                 //    UpdateUpdateActivity(activity, dataLayer);
+
                 //}
             }
         }
@@ -103,20 +104,21 @@ namespace JoinServer.Controllers
             dataLayer.ExecuteNonQuery();
         }
 
-        private List<CurrentLocation> GetMachingLocations(string activity, IDataLayer dataLayer)
+        private List<CurrentActivity> GetMachingLocations(string activity, IDataLayer dataLayer)
         {
             dataLayer.ConnectionString = ConfigurationManager.AppSettings["ConnectionString"].ToString();
-            dataLayer.Sql = "select distinct deviceId, Lat, Long, what, description, imagepath from Activity where what like '%" + activity+"%'";
-            List<CurrentLocation> locations = new List<CurrentLocation>();
+            dataLayer.Sql = "select distinct deviceId, Lat, Long, what, description, imagepath, id from Activity where what like '%" + activity+"%'";
+            List<CurrentActivity> locations = new List<CurrentActivity>();
             foreach (DataRow row in dataLayer.ExecuteDataTable().Rows)
             {
-                locations.Add(new CurrentLocation()
+                locations.Add(new CurrentActivity()
                 { DeviceID = row["deviceid"].ToString(),
                     Lat = double.Parse(row["lat"].ToString()),
                     Long = double.Parse(row["long"].ToString()),
-                    CurrentActivity = row["what"].ToString(),
+                    Activity = row["what"].ToString(),
                     Description = row["description"].ToString(),
-                    ImagePath = row["imagepath"].ToString().Split('.')[0]
+                    ImagePath = row["imagepath"].ToString().Split('.')[0],
+                    ActivityId = row["id"].ToString().Split('.')[0]
                 });
             }
             return locations;

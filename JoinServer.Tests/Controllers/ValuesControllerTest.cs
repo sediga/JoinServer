@@ -49,7 +49,7 @@ namespace JoinServer.Tests.Controllers
         {
             // Arrange
             LocationController controller = new LocationController();
-            CurrentLocation location = new CurrentLocation() { DeviceID = Guid.NewGuid().ToString(), Lat = 40.482367, Long = -79.697782 };
+            CurrentActivity location = new CurrentActivity() { DeviceID = Guid.NewGuid().ToString(), Lat = 40.482367, Long = -79.697782 };
             // Act
             controller.PostLocation(location);
 
