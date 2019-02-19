@@ -23,7 +23,7 @@
 
     public enum NotificationType
     {
-        None = 0,
-        AmIn = 1
+        None,
+        AmIn
     }
 }

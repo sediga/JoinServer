@@ -37,23 +37,6 @@ namespace JoinServer.Controllers
             }
         }
 
-        // POST: api/Device
-        [Route("Device/Notification/{deviceid}")]
-        public void PostNotificationToDevice([FromUri] string deviceId, [FromBody] NotificationType  notificationType, [FromBody] Notification notification)
-        {
-            Device device = null;
-            using (IDataLayer dataLayer = DataLayer.GetInstance(DatabaseTypes.MSSql, false))
-            {
-                device = Getdevice(deviceId, dataLayer);
-            }
-            if (device != null)
-            {
-                string[] devices = { device.NotificationToken };
-               Task<bool> sendStatus = NotificationsHelper.SendNotification(devices, notification.title, notification.text, null);
-            }
-
-        }
-
         // PUT: api/Device/5
         public void Put(int id, [FromBody]string value)
         {
@@ -73,25 +56,6 @@ namespace JoinServer.Controllers
             dataLayer.AddParameter("@softwareversion", device.SoftwareVersion);
             dataLayer.AddParameter("@NotificationToken", device.NotificationToken);
             dataLayer.ExecuteNonQuery();
-        }
-
-        private Device Getdevice(string deviceId, IDataLayer dataLayer)
-        {
-            Device device = null;
-            dataLayer.ConnectionString = ConfigurationManager.AppSettings["ConnectionString"].ToString();
-            dataLayer.Sql = "select EmailId, SoftwareVersion, NotificationToken from Devices where deviceid=@deviceid";
-            DataTable table = dataLayer.ExecuteDataTable();
-            if (table.Rows != null && table.Rows.Count > 0)
-            {
-                device = new Device()
-                {
-                    DeviceID = deviceId,
-                    EmailID = table.Rows[0]["EmailId"].ToString(),
-                    SoftwareVersion = table.Rows[0]["SoftwareVersion"].ToString(),
-                    NotificationToken = table.Rows[0]["NotificationToken"].ToString()
-                };
-            }
-            return device;
         }
     }
 }
