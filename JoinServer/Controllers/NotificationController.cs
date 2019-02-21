@@ -51,7 +51,10 @@ namespace JoinServer.Controllers
             if (device != null)
             {
                 string[] devices = { device.NotificationToken };
-                Task<bool> sendStatus = NotificationsHelper.SendNotification(devices, activity.What, activity.description, activity);
+                string title = activity.What;
+                string body = $"{notificationRequest.DeviceId} wants in on {title}, what do you say?";
+
+                Task<bool> sendStatus = NotificationsHelper.SendNotification(devices, title, body, activity);
             }
 
         }
