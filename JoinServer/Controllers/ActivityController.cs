@@ -54,6 +54,25 @@ namespace JoinServer.Controllers
             return locations;
         }
 
+        [Route("ActivityById/{activityid}")]
+        public CurrentActivity GetActivityById([FromUri] string activityId)
+        {
+            CurrentActivity location = null;
+            try
+            {
+                //Activity activity = JsonConvert.DeserializeObject<Activity>(value);
+                using (IDataLayer dataLayer = DataLayer.GetInstance(DatabaseTypes.MSSql, false))
+                {
+                    location = GetLocationByActivityId(activityId, dataLayer);
+                }
+            }
+            catch (Exception ex)
+            {
+
+            }
+            return location;
+        }
+
         private static void PutAnActivity(Activity activity)
         {
             using (IDataLayer dataLayer = DataLayer.GetInstance(DatabaseTypes.MSSql, false))
@@ -125,6 +144,29 @@ namespace JoinServer.Controllers
         }
 
         // PUT api/values/5
+        private CurrentActivity GetLocationByActivityId(string activityId, IDataLayer dataLayer)
+        {
+            dataLayer.ConnectionString = ConfigurationManager.AppSettings["ConnectionString"].ToString();
+            dataLayer.Sql = "select distinct deviceId, Lat, Long, what, description, imagepath, id from Activity where id = '" + activityId + "'";
+            CurrentActivity location = null;
+            DataTable dataTable = dataLayer.ExecuteDataTable();
+            if (dataTable.Rows.Count > 0)
+            {
+                DataRow row = dataTable.Rows[0];
+                location = new CurrentActivity()
+                {
+                    DeviceID = row["deviceid"].ToString(),
+                    Lat = double.Parse(row["lat"].ToString()),
+                    Long = double.Parse(row["long"].ToString()),
+                    Activity = row["what"].ToString(),
+                    Description = row["description"].ToString(),
+                    ImagePath = row["imagepath"].ToString().Split('.')[0],
+                    ActivityId = row["id"].ToString().Split('.')[0]
+                };
+            }
+            return location;
+        }
+
         public void Put(int id, [FromBody]string value)
         {
         }

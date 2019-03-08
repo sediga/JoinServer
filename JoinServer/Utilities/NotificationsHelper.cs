@@ -41,7 +41,7 @@ namespace JoinServer.Utilities
                     result = await client.SendAsync(request);
                 }
 
-                return true;
+                return result.IsSuccessStatusCode;
             }
             catch (Exception ex)
             {

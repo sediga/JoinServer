@@ -20,10 +20,4 @@
         public string title { get; set; }
         public string text { get; set; }
     }
-
-    public enum NotificationType
-    {
-        None,
-        AmIn
-    }
 }

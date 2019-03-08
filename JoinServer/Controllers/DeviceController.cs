@@ -33,7 +33,11 @@ namespace JoinServer.Controllers
         {
             using (IDataLayer dataLayer = DataLayer.GetInstance(DatabaseTypes.MSSql, false))
             {
-                InsertDevice(device, dataLayer);
+                Device latestDevice = GetLatestDevice(device.DeviceID, dataLayer);
+                if (!(latestDevice != null && latestDevice.NotificationToken == device.NotificationToken))
+                {
+                    InsertDevice(device, dataLayer);
+                }
             }
         }
 
@@ -56,6 +60,29 @@ namespace JoinServer.Controllers
             dataLayer.AddParameter("@softwareversion", device.SoftwareVersion);
             dataLayer.AddParameter("@NotificationToken", device.NotificationToken);
             dataLayer.ExecuteNonQuery();
+        }
+
+        private static Device GetLatestDevice(string device, IDataLayer dataLayer)
+        {
+            dataLayer.ConnectionString = ConfigurationManager.AppSettings["ConnectionString"].ToString();
+            dataLayer.Sql = "select * from devices where deviceid=@deviceid order by CreatedOn desc";
+            dataLayer.AddParameter("@deviceId", device);
+            Device deviceObj = null;
+            using (DataTable table = dataLayer.ExecuteDataTable())
+            {
+                if (table.Rows != null && table.Rows.Count > 0)
+                {
+                    deviceObj = new Device()
+                    {
+                        DeviceID = table.Rows[0]["DeviceId"].ToString(),
+                        EmailID = table.Rows[0]["EmailId"].ToString(),
+                        NotificationToken = table.Rows[0]["NotificationToken"].ToString(),
+                        SoftwareVersion = table.Rows[0]["SoftwareVersion"].ToString()
+                    };
+                }
+            }
+
+            return deviceObj;
         }
     }
 }

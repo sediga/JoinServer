@@ -31,34 +31,82 @@ namespace JoinServer.Controllers
         public void Post([FromBody] NotificationRequest notificationRequest)
         {
             Activity activity = null;
-            Device device = null;
-            using (IDataLayer dataLayer = DataLayer.GetInstance(DatabaseTypes.MSSql, false))
+            Device toDevice = null;
+            Device fromDevice = null;
+            string deviceIdForNotification = null;
+            try
             {
-                dataLayer.BeginTransaction();
-                try
+                using (IDataLayer dataLayer = DataLayer.GetInstance(DatabaseTypes.MSSql, false))
                 {
+                    dataLayer.BeginTransaction();
+                    toDevice = Getdevice(notificationRequest.ToDeviceId, dataLayer);
                     activity = ActivityHelper.GetActivity(notificationRequest.ActivityId, dataLayer);
                     if (activity != null)
                     {
-                        device = Getdevice(activity.DeviceID, dataLayer);
+                        fromDevice = Getdevice(notificationRequest.FromDeviceId, dataLayer);
+                        toDevice = Getdevice(notificationRequest.ToDeviceId, dataLayer);
                     }
                 }
-                catch (Exception ex)
+                if (toDevice != null && fromDevice != null)
                 {
-                    dataLayer.RollbackTransaction();
+                    string[] devices = { toDevice.NotificationToken };
+                    string body = null;
+                    string title = null;
+                    ActivityRequest request = null;
+                    switch (notificationRequest.NotificationRequestStatus)
+                    {
+                        case RequestStatus.NEW:
+                            {
+                                title = activity.What;
+                                body = $"{fromDevice.EmailID} wants in on {title}, what do you say?";
+
+                                request = new ActivityRequest()
+                                {
+                                    RequestFrom = notificationRequest.FromDeviceId,
+                                    RequestTo = notificationRequest.ToDeviceId,
+                                    ActivityId = notificationRequest.ActivityId,
+                                    RequestDate = DateTime.Now,
+                                    RequestStatus = notificationRequest.NotificationRequestStatus,
+                                    RequestStatusChangeDate = DateTime.Now,
+                                    RequestType = notificationRequest.RequestNotificationType
+                                };
+                            }
+                            break;
+                        case RequestStatus.ACCEPTED:
+                        case RequestStatus.REJECTED:
+                            {
+                                title = activity.What;
+                                body = $"{fromDevice.EmailID} {notificationRequest.NotificationRequestStatus.ToString()} your request to {title}";
+
+                                request = new ActivityRequest()
+                                {
+                                    RequestFrom = notificationRequest.ToDeviceId,
+                                    RequestTo = notificationRequest.FromDeviceId,
+                                    ActivityId = notificationRequest.ActivityId,
+                                    RequestDate = DateTime.Now,
+                                    RequestStatus = notificationRequest.NotificationRequestStatus,
+                                    RequestStatusChangeDate = DateTime.Now,
+                                    RequestType = notificationRequest.RequestNotificationType
+                                };
+                            }
+                            break;
+                    }
+                    Task<bool> sendStatus = NotificationsHelper.SendNotification(devices, title, body, notificationRequest);
+                    //sendStatus.Wait();
+                    //if (sendStatus.Result)
+                    //{
+                        using (IDataLayer dataLayer = DataLayer.GetInstance(DatabaseTypes.MSSql, false))
+                        {
+                            ActivityRequestHelper.HandleRequestChange(request, dataLayer);
+                        }
+                    //}
+
                 }
             }
-            if (device != null)
+            catch (Exception ex)
             {
-                string[] devices = { device.NotificationToken };
-                string title = activity.What;
-                string body = $"{notificationRequest.DeviceId} wants in on {title}, what do you say?";
-
-                Task<bool> sendStatus = NotificationsHelper.SendNotification(devices, title, body, activity);
             }
-
         }
-
 
         // PUT: api/Notification/5
         public void Put(int id, [FromBody]string value)

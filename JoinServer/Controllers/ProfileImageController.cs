@@ -12,18 +12,22 @@ using System.Web.Http;
 namespace JoinServer.Controllers
 {
     [Authorize]
-    public class ImagesController : ApiController
+    public class ProfileImageController : ApiController
     {
-        // GET api/values
-        // POST api/values
-        [Route("Images/{deviceid}/{filename}")]
+        [Route("ProfileImage/{deviceid}")]
         [HttpGet]
-        public HttpResponseMessage GetImage([FromUri] string deviceId, [FromUri] string fileName)
+        public HttpResponseMessage GetProfileImage([FromUri] string deviceId)
         {
             HttpResponseMessage result = new HttpResponseMessage(HttpStatusCode.OK);
             try
             {
-                Image image = Image.FromFile(ConfigurationManager.AppSettings["ActivityImagesPath"] + $"{deviceId}\\{fileName}.jpeg");
+                string profileImagePath;
+                using (IDataLayer dataLayer = DataLayer.GetInstance(DatabaseTypes.MSSql, false))
+                {
+                    profileImagePath = GetProfileImagePath(deviceId, dataLayer);
+                }
+
+                Image image = Image.FromFile(ConfigurationManager.AppSettings["ProfileImagesPath"] + profileImagePath);
                 using (MemoryStream ms = new MemoryStream())
                 {
                     image.Save(ms, System.Drawing.Imaging.ImageFormat.Png);
@@ -41,9 +45,8 @@ namespace JoinServer.Controllers
             return result;
         }
 
-        // POST: api/Profile
-        [HttpPost, Route("Images/{deviceId}/{activity}")]
-        public IHttpActionResult PostImageAsync([FromUri] string deviceId, [FromUri] string activity)
+        [HttpPost, Route("ProfileImage/{deviceId}")]
+        public IHttpActionResult PostProfileImageAsync([FromUri] string deviceId)
         {
             try
             {
@@ -60,7 +63,7 @@ namespace JoinServer.Controllers
                                     foreach (HttpContent content in provider.Contents)
                                     {
                                         string fileName = Guid.NewGuid() + ".jpeg";
-                                        string fileFolder = ConfigurationManager.AppSettings["ActivityImagesPath"] + $"{deviceId}\\";
+                                        string fileFolder = ConfigurationManager.AppSettings["ProfileImagesPath"] + $"{deviceId}\\";
                                         if (!Directory.Exists(fileFolder))
                                         {
                                             Directory.CreateDirectory(fileFolder);
@@ -76,7 +79,7 @@ namespace JoinServer.Controllers
                                         var testName = content.Headers.ContentDisposition.Name;
                                         using (IDataLayer dataLayer = DataLayer.GetInstance(DatabaseTypes.MSSql, false))
                                         {
-                                            SavePicture(deviceId, activity, fileName, dataLayer);
+                                            SavePicture(deviceId, fileName, dataLayer);
                                         }
                                     }
                                 }
@@ -100,36 +103,23 @@ namespace JoinServer.Controllers
             return Ok();
         }
 
-        private static void SavePicture(string deviceId, string what, string fileName, IDataLayer dataLayer)
+        private static void SavePicture(string deviceId, string fileName, IDataLayer dataLayer)
         {
             dataLayer.ConnectionString = ConfigurationManager.AppSettings["ConnectionString"].ToString();
-            dataLayer.Sql = string.Format("update activity set imagePath = @imagePath where deviceid =  @deviceid and what = @what");
+            dataLayer.Sql = string.Format("update profile set imagepath = @imagePath where deviceid =  @deviceid");
             dataLayer.AddParameter("@deviceid", deviceId);
-            dataLayer.AddParameter("@what", what);
             dataLayer.AddParameter("@imagePath", deviceId + "\\" + fileName);
             dataLayer.ExecuteNonQuery();
         }
 
-        private Image GetMachingImages(string activity, IDataLayer dataLayer)
+        private string GetProfileImagePath(string deviceID, IDataLayer dataLayer)
         {
             Image returnImage = null;
             byte[] image = new byte[0];
             dataLayer.ConnectionString = ConfigurationManager.AppSettings["ConnectionString"].ToString();
-            dataLayer.Sql = string.Format("select distinct deviceId, Lat, Long, what, description, image from Activity where what = '{0}'", activity);
-            DataTable dataTable = dataLayer.ExecuteDataTable();
-            if (dataTable != null && dataTable.Rows.Count > 0)
-            {
-                image = ((byte[])dataTable.Rows[0]["image"]);
-                MemoryStream ms = new MemoryStream(image);
-                try
-                {
-                    returnImage = Image.FromStream(ms);
-                }
-                catch (ArgumentException ex)
-                {
-                }
-            }
-            return returnImage;
-        }
+            dataLayer.Sql = "select top 1 imagepath from profile where deviceid = @deviceID";
+            dataLayer.AddParameter("@deviceID", deviceID);
+            return dataLayer.ExecuteScalar().ToString();
+         }
     }
 }
