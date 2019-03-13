@@ -88,7 +88,7 @@ namespace JoinServer.Models
 
         public string About { get; set; }
 
-        public byte Rating { get; set; }
+        public float Rating { get; set; }
 
         public long Reviews { get; set; }
 
@@ -96,4 +96,18 @@ namespace JoinServer.Models
 
     }
 
+    public class ProfileReview
+    {
+        public string FromDeviceID { get; set; }
+
+        public string DeviceID { get; set; }
+
+        public string UserName { get; set; }
+
+        public string Review { get; set; }
+
+//        public DateTime ReviewedDate { get; set; }
+
+        public decimal Rating { get; set; }
+    }
 }

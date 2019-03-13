@@ -14,7 +14,7 @@ using System.Web.Http;
 namespace JoinServer.Controllers
 {
     [Authorize]
-    public class ProfileController : ApiController
+    public class ProfileReviewController : ApiController
     {
         // GET: api/Profile
         public IEnumerable<string> Get()
@@ -23,25 +23,26 @@ namespace JoinServer.Controllers
         }
 
         // GET: api/Profile/5
-        [Route("profile/{deviceId}")]
+        [Route("profilereview/{deviceId}")]
         public Profile Get([FromUri] string deviceId)
         {
-            using (IDataLayer dataLayer = DataLayer.GetInstance(DatabaseTypes.MSSql, false))
-            {
-                return ProfileHelper.GetProfile(deviceId, dataLayer);
-            }
+            //using (IDataLayer dataLayer = DataLayer.GetInstance(DatabaseTypes.MSSql, false))
+            //{
+            //    return GetProfile(deviceId, dataLayer);
+            //}
+            return null;
         }
 
         // POST: api/Profile
-        [Route("profile")]
-        public void Post([FromBody]Profile profile)
+        [Route("profilereview")]
+        public void Post([FromBody]ProfileReview profileReview)
         {
 
             using (IDataLayer dataLayer = DataLayer.GetInstance(DatabaseTypes.MSSql, false))
             {
-                if (!ProfileHelper.IsProfileFound(profile.DeviceID, dataLayer))
+                if (ProfileHelper.IsProfileFound(profileReview.DeviceID, dataLayer))
                 {
-                    ProfileHelper.InsertProfile(profile, dataLayer);
+                    ProfileHelper.InsertProfileReview(profileReview, dataLayer);
                 }
                 //else
                 //{
@@ -51,21 +52,21 @@ namespace JoinServer.Controllers
         }
 
         // PUT: api/Profile/5
-        [Route("profile/{deviceId}")]
+        [Route("profilereview/{deviceId}")]
         public void Put([FromUri] string deviceId, [FromBody]Profile profile)
         {
-            using (IDataLayer dataLayer = DataLayer.GetInstance(DatabaseTypes.MSSql, false))
-            {
-                if (!ProfileHelper.IsProfileFound(deviceId, dataLayer))
-                {
-                    ProfileHelper.InsertProfile(profile, dataLayer);
-                }
-                else
-                {
-                    profile.DeviceID = deviceId;
-                    ProfileHelper.UpdateProfile(profile, dataLayer);
-                }
-            }
+            //using (IDataLayer dataLayer = DataLayer.GetInstance(DatabaseTypes.MSSql, false))
+            //{
+            //    if (!IsProfileFound(deviceId, dataLayer))
+            //    {
+            //        InsertProfile(profile, dataLayer);
+            //    }
+            //    else
+            //    {
+            //        profile.DeviceID = deviceId;
+            //        UpdateProfile(profile, dataLayer);
+            //    }
+            //}
         }
 
         // DELETE: api/Profile/5
