@@ -1,4 +1,5 @@
-﻿using System;
+﻿using JoinServer.Utilities;
+using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.Linq;
@@ -8,37 +9,25 @@ namespace JoinServer.Models
 {
     public class CurrentActivity
     {
-        [Required]
-        [DataType(DataType.Password)]
-        [Display(Name = "DeviceId")]
         public string DeviceID { get; set; }
 
-        [Required]
-        [DataType(DataType.Password)]
-        [Display(Name = "Lattitude")]
         public double Lat { get; set; }
 
-        [Required]
-        [DataType(DataType.Password)]
-        [Display(Name = "Longitude")]
         public double Long { get; set; }
 
-        [Required]
-        [DataType(DataType.Text)]
-        [Display(Name = "CurrentActivity")]
         public string Activity { get; set; }
 
-        [DataType(DataType.Text)]
-        [Display(Name = "description")]
         public string Description { get; set; }
 
-        [DataType(DataType.Text)]
-        [Display(Name = "imagepath")]
         public string ImagePath { get; set; }
 
-        [DataType(DataType.Text)]
-        [Display(Name = "activityid")]
         public string ActivityId { get; set; }
+
+        public string ActivityType { get; set; }
+
+        public string ActivityStartTime { get; set; }
+
+        public string ActivityEndTime { get; set; }
     }
 
     public class Activity
@@ -72,6 +61,8 @@ namespace JoinServer.Models
         [DataType(DataType.Password)]
         [Display(Name = "description")]
         public string description { get; set; }
+
+        public ActivitySettings ActivitySetting { get; set; }
     }
 
     public class Profile
@@ -109,5 +100,24 @@ namespace JoinServer.Models
 //        public DateTime ReviewedDate { get; set; }
 
         public decimal Rating { get; set; }
+    }
+
+    public class ActivitySettings
+    {
+        public Guid ActivityId { get; set; }
+
+        public DateTime StartTime { get; set; }
+
+        public DateTime EndTime { get; set; }
+
+        public ActivityTypes ActivityType { get; set; }
+
+        public ActivityStatuses ActivityStatus { get; set; }
+
+        public long ActivityReviews { get; set; }
+
+        public long ActivityViews { get; set; }
+
+        public string Comments { get; set; }
     }
 }

@@ -1,5 +1,6 @@
 ﻿using DataAccessLayer;
 using JoinServer.Models;
+using JoinServer.Utilities;
 using log4net;
 using Newtonsoft.Json;
 using System;
@@ -22,17 +23,30 @@ namespace JoinServer.Controllers
         // GET api/values
         // POST api/values
         [Route("Activity")]
-        public void PostActivity([FromBody]Activity activity)
+        public Activity PostActivity([FromBody]Activity activity)
         {
-            try
+            using (IDataLayer dataLayer = DataLayer.GetInstance(DatabaseTypes.MSSql, false))
             {
-                //Activity activity = JsonConvert.DeserializeObject<Activity>(value);
-                PutAnActivity(activity);
+                try
+                {
+                    dataLayer.BeginTransaction();
+                    //Activity activity = JsonConvert.DeserializeObject<Activity>(value);
+                    Guid activityId = ActivityHelper.InsertActivity(activity, dataLayer);
+                    if (activity.ActivitySetting != null)
+                    {
+                        activity.ActivitySetting.ActivityId = activityId;
+                        ActivityHelper.InsertActivitySettings(activity.ActivitySetting, dataLayer);
+                    }
+                    dataLayer.CommitTransaction();
+                }
+                catch (Exception ex)
+                {
+                    dataLayer.RollbackTransaction();
+                    return null;
+                }
             }
-            catch (Exception ex)
-            {
 
-            }
+            return activity;
         }
 
         [Route("Activity/{activity}")]
@@ -44,7 +58,26 @@ namespace JoinServer.Controllers
                 //Activity activity = JsonConvert.DeserializeObject<Activity>(value);
                 using (IDataLayer dataLayer = DataLayer.GetInstance(DatabaseTypes.MSSql, false))
                 {
-                    locations = GetMachingLocations(activity, dataLayer);
+                    locations = ActivityHelper.GetMachingLocations(activity, dataLayer);
+                }
+            }
+            catch (Exception ex)
+            {
+
+            }
+            return locations;
+        }
+
+        [Route("Activity")]
+        public List<CurrentActivity> GetAllActivity()
+        {
+            List<CurrentActivity> locations = null;
+            try
+            {
+                //Activity activity = JsonConvert.DeserializeObject<Activity>(value);
+                using (IDataLayer dataLayer = DataLayer.GetInstance(DatabaseTypes.MSSql, false))
+                {
+                    locations = ActivityHelper.GetMachingLocations(null, dataLayer);
                 }
             }
             catch (Exception ex)
@@ -63,7 +96,7 @@ namespace JoinServer.Controllers
                 //Activity activity = JsonConvert.DeserializeObject<Activity>(value);
                 using (IDataLayer dataLayer = DataLayer.GetInstance(DatabaseTypes.MSSql, false))
                 {
-                    location = GetLocationByActivityId(activityId, dataLayer);
+                    location = ActivityHelper.GetLocationByActivityId(activityId, dataLayer);
                 }
             }
             catch (Exception ex)
@@ -79,7 +112,7 @@ namespace JoinServer.Controllers
             {
                 //if (!IsDeviceFound(activity, dataLayer))
                 //{
-                    InsertActivity(activity, dataLayer);
+                ActivityHelper.InsertActivity(activity, dataLayer);
                 //}
                 //else
                 //{
@@ -87,84 +120,6 @@ namespace JoinServer.Controllers
 
                 //}
             }
-        }
-
-        private static bool IsDeviceFound(Activity activity, IDataLayer dataLayer)
-        {
-            dataLayer.ConnectionString = ConfigurationManager.AppSettings["ConnectionString"].ToString();
-            dataLayer.Sql = "select count(*) from Activity where deviceid = @deviceid";
-            dataLayer.AddParameter("@deviceid", activity.DeviceID);
-            return ((int)dataLayer.ExecuteScalar() > 0);
-        }
-
-        private static void InsertActivity(Activity activity, IDataLayer dataLayer)
-        {
-            dataLayer.ConnectionString = ConfigurationManager.AppSettings["ConnectionString"].ToString();
-            dataLayer.Sql = "insert into Activity(deviceid, what, [when], lat, long, description, id) values(@deviceId, @what, @when, @lat, @long, @description, @id)";
-            dataLayer.AddParameter("@deviceId", activity.DeviceID);
-            dataLayer.AddParameter("@What", activity.What);
-            dataLayer.AddParameter("@when", activity.When);
-            dataLayer.AddParameter("@lat", activity.Lat);
-            dataLayer.AddParameter("@long", activity.Long);
-            dataLayer.AddParameter("@description", activity.description);
-            dataLayer.AddParameter("@id", Guid.NewGuid());
-            dataLayer.ExecuteNonQuery();
-        }
-
-        private static void UpdateUpdateActivity(Activity activity, IDataLayer dataLayer)
-        {
-            dataLayer.ConnectionString = ConfigurationManager.AppSettings["ConnectionString"].ToString();
-            dataLayer.Sql = "update Activity set what = @what, [when] = @when, lat = @lat, long = @long where deviceid = @deviceid";
-            dataLayer.AddParameter("@deviceId", activity.DeviceID);
-            dataLayer.AddParameter("@What", activity.What);
-            dataLayer.AddParameter("@when", activity.When);
-            dataLayer.AddParameter("@lat", activity.Lat);
-            dataLayer.AddParameter("@long", activity.Long);
-            dataLayer.ExecuteNonQuery();
-        }
-
-        private List<CurrentActivity> GetMachingLocations(string activity, IDataLayer dataLayer)
-        {
-            dataLayer.ConnectionString = ConfigurationManager.AppSettings["ConnectionString"].ToString();
-            dataLayer.Sql = "select distinct deviceId, Lat, Long, what, description, imagepath, id from Activity where what like '%" + activity+"%'";
-            List<CurrentActivity> locations = new List<CurrentActivity>();
-            foreach (DataRow row in dataLayer.ExecuteDataTable().Rows)
-            {
-                locations.Add(new CurrentActivity()
-                { DeviceID = row["deviceid"].ToString(),
-                    Lat = double.Parse(row["lat"].ToString()),
-                    Long = double.Parse(row["long"].ToString()),
-                    Activity = row["what"].ToString(),
-                    Description = row["description"].ToString(),
-                    ImagePath = row["imagepath"].ToString().Split('.')[0],
-                    ActivityId = row["id"].ToString().Split('.')[0]
-                });
-            }
-            return locations;
-        }
-
-        // PUT api/values/5
-        private CurrentActivity GetLocationByActivityId(string activityId, IDataLayer dataLayer)
-        {
-            dataLayer.ConnectionString = ConfigurationManager.AppSettings["ConnectionString"].ToString();
-            dataLayer.Sql = "select distinct deviceId, Lat, Long, what, description, imagepath, id from Activity where id = '" + activityId + "'";
-            CurrentActivity location = null;
-            DataTable dataTable = dataLayer.ExecuteDataTable();
-            if (dataTable.Rows.Count > 0)
-            {
-                DataRow row = dataTable.Rows[0];
-                location = new CurrentActivity()
-                {
-                    DeviceID = row["deviceid"].ToString(),
-                    Lat = double.Parse(row["lat"].ToString()),
-                    Long = double.Parse(row["long"].ToString()),
-                    Activity = row["what"].ToString(),
-                    Description = row["description"].ToString(),
-                    ImagePath = row["imagepath"].ToString().Split('.')[0],
-                    ActivityId = row["id"].ToString().Split('.')[0]
-                };
-            }
-            return location;
         }
 
         public void Put(int id, [FromBody]string value)

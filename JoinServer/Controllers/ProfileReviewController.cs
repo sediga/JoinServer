@@ -24,12 +24,12 @@ namespace JoinServer.Controllers
 
         // GET: api/Profile/5
         [Route("profilereview/{deviceId}")]
-        public Profile Get([FromUri] string deviceId)
+        public List<ProfileReview> Get([FromUri] string deviceId)
         {
-            //using (IDataLayer dataLayer = DataLayer.GetInstance(DatabaseTypes.MSSql, false))
-            //{
-            //    return GetProfile(deviceId, dataLayer);
-            //}
+            using (IDataLayer dataLayer = DataLayer.GetInstance(DatabaseTypes.MSSql, false))
+            {
+                return ProfileHelper.GetProfileReviews(deviceId, dataLayer);
+            }
             return null;
         }
 

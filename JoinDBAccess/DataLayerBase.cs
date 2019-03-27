@@ -660,7 +660,7 @@ namespace DataAccessLayer
                 catch (Exception ex)
                 {
                     if (Reconnect(dbComm, ex))
-                        return ExecuteNonQuery();
+                        return ExecuteNonQuery();                       
                 }
             }
 
@@ -669,7 +669,7 @@ namespace DataAccessLayer
             return result;
         }
         
-        /// <summary>
+        /// <summary>       
         /// Executes the query, and returns the first column of the first row in the result set returned by the query. Additional columns or rows are ignored.
         /// </summary>
         /// <returns>The first column of the first row in the result set, or a null reference if the result set is empty.</returns>

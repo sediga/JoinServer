@@ -124,5 +124,38 @@ namespace JoinServer.Utilities
             }
         }
 
+        public static List<ProfileReview> GetProfileReviews(string deviceId, IDataLayer dataLayer)
+        {
+            List<ProfileReview> profileReviewList = new List<ProfileReview>();
+            try
+            {
+                dataLayer.ConnectionString = ConfigurationManager.AppSettings["ConnectionString"].ToString();
+                dataLayer.Sql = @"select distinct * from ProfileReviews where deviceid = @deviceid";
+                dataLayer.AddParameter("@deviceid", deviceId);
+                DataTable dataTable = dataLayer.ExecuteDataTable();
+                if (dataTable != null && dataTable.Rows != null && dataTable.Rows.Count >= 1)
+                {
+                    foreach(DataRow row in dataTable.Rows)
+                    {
+                        ProfileReview profileReview = new ProfileReview()
+                        {
+                            FromDeviceID = (string)row["reviewfrom"],
+                            DeviceID = (string)row["deviceid"],
+                            UserName = (string)row["username"],
+                            Review = (string)row["review"],
+                            Rating = row["rating"] == DBNull.Value ? 0 : decimal.Parse(row["rating"].ToString()),
+                        };
+
+                        profileReviewList.Add(profileReview);
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                //throw ex;
+            }
+            return profileReviewList;
+        }
+
     }
 }

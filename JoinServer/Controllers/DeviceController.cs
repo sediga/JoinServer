@@ -34,9 +34,13 @@ namespace JoinServer.Controllers
             using (IDataLayer dataLayer = DataLayer.GetInstance(DatabaseTypes.MSSql, false))
             {
                 Device latestDevice = GetLatestDevice(device.DeviceID, dataLayer);
-                if (!(latestDevice != null && latestDevice.NotificationToken == device.NotificationToken))
+                if (latestDevice == null)
                 {
                     InsertDevice(device, dataLayer);
+                }
+                else
+                {
+                    UpdateDevice(device, dataLayer);
                 }
             }
         }
@@ -59,6 +63,24 @@ namespace JoinServer.Controllers
             dataLayer.AddParameter("@emailid", device.EmailID);
             dataLayer.AddParameter("@softwareversion", device.SoftwareVersion);
             dataLayer.AddParameter("@NotificationToken", device.NotificationToken);
+            dataLayer.ExecuteNonQuery();
+        }
+
+        private static void UpdateDevice(Device device, IDataLayer dataLayer)
+        {
+            dataLayer.ConnectionString = ConfigurationManager.AppSettings["ConnectionString"].ToString();
+            if (!string.IsNullOrEmpty(device.NotificationToken))
+            {
+                dataLayer.Sql = "update Devices set emailid = @emailid, softwareversion = @softwareversion, notificationtoken = @NotificationToken where deviceid = @deviceId";
+                dataLayer.AddParameter("@NotificationToken", device.NotificationToken);
+            }
+            else
+            {
+                dataLayer.Sql = "update Devices set emailid = @emailid, softwareversion = @softwareversion where deviceid = @deviceId";
+            }
+            dataLayer.AddParameter("@deviceId", device.DeviceID);
+            dataLayer.AddParameter("@emailid", device.EmailID);
+            dataLayer.AddParameter("@softwareversion", device.SoftwareVersion);
             dataLayer.ExecuteNonQuery();
         }
 

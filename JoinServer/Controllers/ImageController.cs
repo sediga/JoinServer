@@ -100,12 +100,12 @@ namespace JoinServer.Controllers
             return Ok();
         }
 
-        private static void SavePicture(string deviceId, string what, string fileName, IDataLayer dataLayer)
+        private static void SavePicture(string deviceId, string activity, string fileName, IDataLayer dataLayer)
         {
             dataLayer.ConnectionString = ConfigurationManager.AppSettings["ConnectionString"].ToString();
-            dataLayer.Sql = string.Format("update activity set imagePath = @imagePath where deviceid =  @deviceid and what = @what");
+            dataLayer.Sql = string.Format("update activity set imagePath = @imagePath where deviceid =  @deviceid and [id] = @activityid");
             dataLayer.AddParameter("@deviceid", deviceId);
-            dataLayer.AddParameter("@what", what);
+            dataLayer.AddParameter("@activityid", activity);
             dataLayer.AddParameter("@imagePath", deviceId + "\\" + fileName);
             dataLayer.ExecuteNonQuery();
         }
