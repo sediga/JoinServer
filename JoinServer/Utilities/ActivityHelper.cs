@@ -159,32 +159,32 @@ namespace JoinServer.Utilities
             dataLayer.ExecuteNonQuery();
         }
 
-        public static List<CurrentActivity> GetMachingLocations(string activity, IDataLayer dataLayer)
+        public static List<CurrentActivity> GetMachingLocations(string device, string activity, IDataLayer dataLayer)
         {
             dataLayer.ConnectionString = ConfigurationManager.AppSettings["ConnectionString"].ToString();
             if (string.IsNullOrEmpty(activity))
             {
-                dataLayer.Sql = @"select distinct deviceId, Lat, Long, what, description, imagepath, id, ase.activtyType, ase.starttime, ase.endtime from Activity a inner join activitysettings ase
-								on ase.activityid = a.Id and  getdate() between ase.starttime and ase.endtime";
+                dataLayer.Sql = @"select distinct deviceId, Lat, Long, what, description, imagepath, id, ase.activtyType, ase.starttime, ase.endtime, ar.activityrequestid, ar.status from Activity a inner join activitysettings ase
+								on ase.activityid = a.Id and  getdate() between ase.starttime and ase.endtime
+								left join activityrequests ar on ar.requestfrom = @device and ar.activityid = a.Id";
+                dataLayer.AddParameter("@device", device);
             }
             else
             {
-                dataLayer.Sql = @"select distinct deviceId, Lat, Long, what, description, imagepath, id, ase.activtyType, ase.starttime, ase.endtime from Activity a inner join activitysettings ase
+                dataLayer.Sql = @"select distinct deviceId, Lat, Long, what, description, imagepath, id, ase.activtyType, ase.starttime, ase.endtime, ar.activityrequestid, ar.status from Activity a inner join activitysettings ase
 								on ase.activityid = a.Id and  getdate() between ase.starttime and ase.endtime
+								left join activityrequests ar on ar.requestfrom = @device and ar.activityid = a.Id
                                  where what like '%'+@activity+'%'";
+                dataLayer.AddParameter("@device", device);
                 dataLayer.AddParameter("@activity", activity);
             }
             List<CurrentActivity> locations = new List<CurrentActivity>();
             foreach (DataRow row in dataLayer.ExecuteDataTable().Rows)
             {
-                var duplicateLocation = locations.Find(x => x.Lat == double.Parse(row["lat"].ToString()) && x.Long == double.Parse(row["long"].ToString()));
-                //if (duplicateLocation != null)
-                //{
-                //    double newLat, newLong;
-                //    getRandomLocationInCircle(duplicateLocation.Long, duplicateLocation.Lat, 40, out newLat, out newLong);
-                //    duplicateLocation.Lat = newLat;
-                //    duplicateLocation.Long = newLong;
-                //}
+                if(row["status"] != DBNull.Value && (RequestStatus)int.Parse(row["status"].ToString()) == RequestStatus.REJECTED)
+                {
+                    continue;
+                }
                 locations.Add(new CurrentActivity()
                 {
                     DeviceID = row["deviceid"].ToString(),
@@ -196,8 +196,9 @@ namespace JoinServer.Utilities
                     ActivityId = row["id"].ToString().Split('.')[0],
                     ActivityType = ((ActivityTypes) int.Parse(row["activtyType"].ToString())).ToString(),
                     ActivityStartTime = DateTime.Parse(row["starttime"].ToString()).ToString("yyyy-MM-dd HH:mm:ss"),
-                    ActivityEndTime = DateTime.Parse(row["endtime"].ToString()).ToString("yyyy-MM-dd HH:mm:ss")
-                });
+                    ActivityEndTime = DateTime.Parse(row["endtime"].ToString()).ToString("yyyy-MM-dd HH:mm:ss"),
+                    ActivityRequestStatus = ((RequestStatus)int.Parse(row["status"] == DBNull.Value ? "0" : row["status"].ToString())).ToString()
+            });
             }
             
             return locations;

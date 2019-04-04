@@ -49,8 +49,8 @@ namespace JoinServer.Controllers
             return activity;
         }
 
-        [Route("Activity/{activity}")]
-        public List<CurrentActivity> GetActivity([FromUri] string activity)
+        [Route("Activity/{device}/{activity}")]
+        public List<CurrentActivity> GetActivity([FromUri] string device, [FromUri] string activity)
         {
             List<CurrentActivity> locations = null;
             try
@@ -58,7 +58,7 @@ namespace JoinServer.Controllers
                 //Activity activity = JsonConvert.DeserializeObject<Activity>(value);
                 using (IDataLayer dataLayer = DataLayer.GetInstance(DatabaseTypes.MSSql, false))
                 {
-                    locations = ActivityHelper.GetMachingLocations(activity, dataLayer);
+                    locations = ActivityHelper.GetMachingLocations(device, activity, dataLayer);
                 }
             }
             catch (Exception ex)
@@ -68,8 +68,8 @@ namespace JoinServer.Controllers
             return locations;
         }
 
-        [Route("Activity")]
-        public List<CurrentActivity> GetAllActivity()
+        [Route("Activity/{device}")]
+        public List<CurrentActivity> GetAllActivity([FromUri] string device)
         {
             List<CurrentActivity> locations = null;
             try
@@ -77,7 +77,7 @@ namespace JoinServer.Controllers
                 //Activity activity = JsonConvert.DeserializeObject<Activity>(value);
                 using (IDataLayer dataLayer = DataLayer.GetInstance(DatabaseTypes.MSSql, false))
                 {
-                    locations = ActivityHelper.GetMachingLocations(null, dataLayer);
+                    locations = ActivityHelper.GetMachingLocations(device, null, dataLayer);
                 }
             }
             catch (Exception ex)

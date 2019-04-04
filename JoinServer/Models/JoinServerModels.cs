@@ -28,6 +28,8 @@ namespace JoinServer.Models
         public string ActivityStartTime { get; set; }
 
         public string ActivityEndTime { get; set; }
+
+        public string ActivityRequestStatus { get; set; }
     }
 
     public class Activity
