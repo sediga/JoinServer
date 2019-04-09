@@ -49,8 +49,8 @@ namespace JoinServer.Controllers
             return activity;
         }
 
-        [Route("Activity/{device}/{activity}")]
-        public List<CurrentActivity> GetActivity([FromUri] string device, [FromUri] string activity)
+        [Route("Activity/{device}/{activity}/{toplat}/{bottomlat}/{leftlng}/{rightlng}")]
+        public List<CurrentActivity> GetActivity([FromUri] string device, [FromUri] string activity, [FromUri] double toplat, [FromUri] double bottomlat, [FromUri] double leftlng, [FromUri] double rightlng)
         {
             List<CurrentActivity> locations = null;
             try
@@ -58,7 +58,7 @@ namespace JoinServer.Controllers
                 //Activity activity = JsonConvert.DeserializeObject<Activity>(value);
                 using (IDataLayer dataLayer = DataLayer.GetInstance(DatabaseTypes.MSSql, false))
                 {
-                    locations = ActivityHelper.GetMachingLocations(device, activity, dataLayer);
+                    locations = ActivityHelper.GetMachingLocations(device, activity, toplat, bottomlat, leftlng, rightlng, dataLayer);
                 }
             }
             catch (Exception ex)
@@ -68,8 +68,8 @@ namespace JoinServer.Controllers
             return locations;
         }
 
-        [Route("Activity/{device}")]
-        public List<CurrentActivity> GetAllActivity([FromUri] string device)
+        [Route("Activity/{device}/{toplat}/{bottomlat}/{leftlng}/{rightlng}")]
+        public List<CurrentActivity> GetAllActivity([FromUri] string device, [FromUri] double toplat, [FromUri] double bottomlat, [FromUri] double leftlng, [FromUri] double rightlng)
         {
             List<CurrentActivity> locations = null;
             try
@@ -77,7 +77,26 @@ namespace JoinServer.Controllers
                 //Activity activity = JsonConvert.DeserializeObject<Activity>(value);
                 using (IDataLayer dataLayer = DataLayer.GetInstance(DatabaseTypes.MSSql, false))
                 {
-                    locations = ActivityHelper.GetMachingLocations(device, null, dataLayer);
+                    locations = ActivityHelper.GetMachingLocations(device, null, toplat, bottomlat, leftlng, rightlng, dataLayer);
+                }
+            }
+            catch (Exception ex)
+            {
+
+            }
+            return locations;
+        }
+
+        [Route("MyActivities/{device}")]
+        public List<CurrentActivity> GetMyActivities([FromUri] string device)
+        {
+            List<CurrentActivity> locations = null;
+            try
+            {
+                //Activity activity = JsonConvert.DeserializeObject<Activity>(value);
+                using (IDataLayer dataLayer = DataLayer.GetInstance(DatabaseTypes.MSSql, false))
+                {
+                    locations = ActivityHelper.GetMyActivities(device, dataLayer);
                 }
             }
             catch (Exception ex)

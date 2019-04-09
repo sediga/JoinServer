@@ -30,6 +30,9 @@ namespace JoinServer.Models
         public string ActivityEndTime { get; set; }
 
         public string ActivityRequestStatus { get; set; }
+
+        public float ProfileRating { get; set; }
+
     }
 
     public class Activity

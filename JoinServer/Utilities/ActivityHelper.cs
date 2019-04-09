@@ -159,49 +159,86 @@ namespace JoinServer.Utilities
             dataLayer.ExecuteNonQuery();
         }
 
-        public static List<CurrentActivity> GetMachingLocations(string device, string activity, IDataLayer dataLayer)
+        public static List<CurrentActivity> GetMachingLocations(string device, string activity, double topLat, double bottomLat, double leftLng, double rightLng, IDataLayer dataLayer)
         {
             dataLayer.ConnectionString = ConfigurationManager.AppSettings["ConnectionString"].ToString();
             if (string.IsNullOrEmpty(activity))
             {
-                dataLayer.Sql = @"select distinct deviceId, Lat, Long, what, description, imagepath, id, ase.activtyType, ase.starttime, ase.endtime, ar.activityrequestid, ar.status from Activity a inner join activitysettings ase
-								on ase.activityid = a.Id and  getdate() between ase.starttime and ase.endtime
-								left join activityrequests ar on ar.requestfrom = @device and ar.activityid = a.Id";
+                dataLayer.Sql = @"select distinct a.deviceId, Lat, Long, what, description, imagepath, a.id, ase.activtyType, ase.starttime, ase.endtime, ar.activityrequestid, ar.status, AVG(pr.rating) rating from Activity a 
+								 inner join activitysettings ase on ase.activityid = a.Id and  getdate() between ase.starttime and ase.endtime
+								left join activityrequests ar on ar.requestfrom = @device and ar.activityid = a.Id
+								left join ProfileReviews pr on pr.deviceid = a.deviceid
+								where lat between @bottomLat and @topLat and long between @leftLng and @rightLng
+								group by a.deviceId, Lat, Long, what, description, imagepath, a.id, ase.activtyType, ase.starttime, ase.endtime, ar.activityrequestid, ar.status";
                 dataLayer.AddParameter("@device", device);
             }
             else
             {
-                dataLayer.Sql = @"select distinct deviceId, Lat, Long, what, description, imagepath, id, ase.activtyType, ase.starttime, ase.endtime, ar.activityrequestid, ar.status from Activity a inner join activitysettings ase
+                dataLayer.Sql = @"select distinct a.deviceId, Lat, Long, what, description, imagepath, a.id, ase.activtyType, ase.starttime, ase.endtime, ar.activityrequestid, ar.status, AVG(pr.rating) rating from Activity a inner join activitysettings ase
 								on ase.activityid = a.Id and  getdate() between ase.starttime and ase.endtime
 								left join activityrequests ar on ar.requestfrom = @device and ar.activityid = a.Id
-                                 where what like '%'+@activity+'%'";
+								left join ProfileReviews pr on pr.deviceid = a.deviceid
+                                 where what like '%'+@activity+'%' and lat between @bottomLat and @topLat and long between @leftLng and @rightLng
+								 group by a.deviceId, Lat, Long, what, description, imagepath, a.id, ase.activtyType, ase.starttime, ase.endtime, ar.activityrequestid, ar.status";
                 dataLayer.AddParameter("@device", device);
                 dataLayer.AddParameter("@activity", activity);
             }
+            dataLayer.AddParameter("@topLat", topLat);
+            dataLayer.AddParameter("@bottomLat", bottomLat);
+            dataLayer.AddParameter("@leftLng", leftLng);
+            dataLayer.AddParameter("@rightLng", rightLng);
             List<CurrentActivity> locations = new List<CurrentActivity>();
             foreach (DataRow row in dataLayer.ExecuteDataTable().Rows)
             {
-                if(row["status"] != DBNull.Value && (RequestStatus)int.Parse(row["status"].ToString()) == RequestStatus.REJECTED)
+                if (row["status"] != DBNull.Value && (RequestStatus)int.Parse(row["status"].ToString()) == RequestStatus.REJECTED)
                 {
                     continue;
                 }
-                locations.Add(new CurrentActivity()
-                {
-                    DeviceID = row["deviceid"].ToString(),
-                    Lat = double.Parse(row["lat"].ToString()),
-                    Long = double.Parse(row["long"].ToString()),
-                    Activity = row["what"].ToString(),
-                    Description = row["description"].ToString(),
-                    ImagePath = row["imagepath"].ToString().Split('.')[0],
-                    ActivityId = row["id"].ToString().Split('.')[0],
-                    ActivityType = ((ActivityTypes) int.Parse(row["activtyType"].ToString())).ToString(),
-                    ActivityStartTime = DateTime.Parse(row["starttime"].ToString()).ToString("yyyy-MM-dd HH:mm:ss"),
-                    ActivityEndTime = DateTime.Parse(row["endtime"].ToString()).ToString("yyyy-MM-dd HH:mm:ss"),
-                    ActivityRequestStatus = ((RequestStatus)int.Parse(row["status"] == DBNull.Value ? "0" : row["status"].ToString())).ToString()
-            });
+                locations.Add(FillLocation(row));
             }
-            
+
             return locations;
+        }
+
+        public static List<CurrentActivity> GetMyActivities(string device, IDataLayer dataLayer)
+        {
+            dataLayer.ConnectionString = ConfigurationManager.AppSettings["ConnectionString"].ToString();
+            dataLayer.Sql = @"select distinct a.deviceId, Lat, Long, what, description, imagepath, a.id, ase.activtyType, ase.starttime, ase.endtime, null as activityrequestid, null as status, AVG(pr.rating) rating from Activity a 
+								 inner join activitysettings ase on ase.activityid = a.Id and  getdate() between ase.starttime and ase.endtime
+								left join ProfileReviews pr on pr.deviceid = a.deviceid
+								where a.deviceid = @device
+								group by a.deviceId, Lat, Long, what, description, imagepath, a.id, ase.activtyType, ase.starttime, ase.endtime";
+            dataLayer.AddParameter("@device", device);
+            List<CurrentActivity> locations = new List<CurrentActivity>();
+            foreach (DataRow row in dataLayer.ExecuteDataTable().Rows)
+            {
+                if (row["status"] != DBNull.Value && (RequestStatus)int.Parse(row["status"].ToString()) == RequestStatus.REJECTED)
+                {
+                    continue;
+                }
+                locations.Add(FillLocation(row));
+            }
+
+            return locations;
+        }
+
+        private static CurrentActivity FillLocation(DataRow row)
+        {
+            return new CurrentActivity()
+            {
+                DeviceID = row["deviceid"].ToString(),
+                Lat = double.Parse(row["lat"].ToString()),
+                Long = double.Parse(row["long"].ToString()),
+                Activity = row["what"].ToString(),
+                Description = row["description"].ToString(),
+                ImagePath = row["imagepath"].ToString().Split('.')[0],
+                ActivityId = row["id"].ToString().Split('.')[0],
+                ActivityType = ((ActivityTypes)int.Parse(row["activtyType"].ToString())).ToString(),
+                ActivityStartTime = DateTime.Parse(row["starttime"].ToString()).ToString("yyyy-MM-dd HH:mm:ss"),
+                ActivityEndTime = DateTime.Parse(row["endtime"].ToString()).ToString("yyyy-MM-dd HH:mm:ss"),
+                ActivityRequestStatus = ((RequestStatus)int.Parse(row["status"] == DBNull.Value ? "0" : row["status"].ToString())).ToString(),
+                ProfileRating = float.Parse(row["rating"] == DBNull.Value ? "0.0" : row["rating"].ToString())
+            };
         }
 
         private static void getRandomLocationInCircle(double x0, double y0, int radius, out double foundLatitude, out double foundLongitude)
