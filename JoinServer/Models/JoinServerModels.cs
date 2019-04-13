@@ -102,7 +102,7 @@ namespace JoinServer.Models
 
         public string Review { get; set; }
 
-//        public DateTime ReviewedDate { get; set; }
+        //        public DateTime ReviewedDate { get; set; }
 
         public decimal Rating { get; set; }
     }
