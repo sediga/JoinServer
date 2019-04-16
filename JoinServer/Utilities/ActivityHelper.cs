@@ -23,7 +23,7 @@ namespace JoinServer.Utilities
                     description = table.Rows[0]["description"].ToString(),
                     DeviceID = table.Rows[0]["deviceId"].ToString(),
                     What = table.Rows[0]["what"].ToString(),
-                    When = DateTime.Parse(table.Rows[0]["activityTime"].ToString()),
+                    When = table.Rows[0]["activityTime"].ToString(),
                     Lat = double.Parse(table.Rows[0]["lat"].ToString()),
                     Long = double.Parse(table.Rows[0]["long"].ToString())
                 };
@@ -31,11 +31,15 @@ namespace JoinServer.Utilities
             return activity;
         }
 
-        public static bool IsActivityFound(ActivitySettings activitySetting, IDataLayer dataLayer)
+        public static bool IsActivityFound(string activityId, IDataLayer dataLayer)
         {
+            if (string.IsNullOrEmpty(activityId))
+            {
+                return false;
+            }
             dataLayer.ConnectionString = ConfigurationManager.AppSettings["ConnectionString"].ToString();
-            dataLayer.Sql = "select count(*) from Activity where activityid = @activityid";
-            dataLayer.AddParameter("@activityid", activitySetting.ActivityId);
+            dataLayer.Sql = "select count(*) from Activity where id = @activityid";
+            dataLayer.AddParameter("@activityid", activityId);
             return ((int)dataLayer.ExecuteScalar() > 0);
         }
 
@@ -59,32 +63,46 @@ namespace JoinServer.Utilities
             dataLayer.AddParameter("@activityid", activity.ActivityId);
             dataLayer.AddParameter("@starttime", activity.StartTime);
             dataLayer.AddParameter("@endtime", activity.EndTime);
-            dataLayer.AddParameter("@activtyType", activity.ActivityType);
-            dataLayer.AddParameter("@activitystatus", activity.ActivityStatus);
+            dataLayer.AddParameter("@activtyType", Enum.Parse(typeof(ActivityTypes), activity.ActivityType));
+            dataLayer.AddParameter("@activitystatus", Enum.Parse(typeof(ActivityStatuses), activity.ActivityStatus));
             dataLayer.AddParameter("@comments", activity.Comments ?? "");
             dataLayer.ExecuteNonQuery();
         }
 
-        public static void UpdateUpdateActivity(ActivitySettings activity, IDataLayer dataLayer)
+        public static void UpdateMinActivitySettings(ActivitySettings activitySettings, IDataLayer dataLayer)
         {
             dataLayer.ConnectionString = ConfigurationManager.AppSettings["ConnectionString"].ToString();
             dataLayer.Sql = @"UPDATE [dbo].[activitysettings]
                                 SET [starttime] = @starttime
                                     ,[endtime] = @endtime
                                     ,[activtyType] = @activtyType
-                                    ,[activitystatus] = @activitystatus
-                                    ,[activityreviews] = @activityreviews
-                                    ,[activityviews] = @activityviews
-                                    ,[comments] = @comments
                                 WHERE activityid = @activityid";
-            dataLayer.AddParameter("@activityid", activity.ActivityId);
-            dataLayer.AddParameter("@starttime", activity.StartTime);
-            dataLayer.AddParameter("@endtime", activity.EndTime);
-            dataLayer.AddParameter("@activtyType", activity.ActivityType);
-            dataLayer.AddParameter("@activitystatus", activity.ActivityStatus);
-            dataLayer.AddParameter("@activityreviews", activity.ActivityReviews);
-            dataLayer.AddParameter("@activityviews", activity.ActivityViews);
-            dataLayer.AddParameter("@comments", activity.Comments);
+            dataLayer.AddParameter("@activityid", activitySettings.ActivityId);
+            dataLayer.AddParameter("@starttime", activitySettings.StartTime);
+            dataLayer.AddParameter("@endtime", activitySettings.EndTime);
+            dataLayer.AddParameter("@activtyType", Enum.Parse(typeof(ActivityTypes), activitySettings.ActivityType));
+            //dataLayer.AddParameter("@activitystatus", activitySettings.ActivityStatus);
+            //dataLayer.AddParameter("@activityreviews", activitySettings.ActivityReviews);
+            //dataLayer.AddParameter("@activityviews", activitySettings.ActivityViews);
+            //dataLayer.AddParameter("@comments", activitySettings.Comments);
+            dataLayer.ExecuteNonQuery();
+        }
+
+        public static void DeleteActivitySettings(string activityId, IDataLayer dataLayer)
+        {
+            dataLayer.ConnectionString = ConfigurationManager.AppSettings["ConnectionString"].ToString();
+            dataLayer.Sql = @"delete from [dbo].[activitysettings]
+                                WHERE activityid = @activityid";
+            dataLayer.AddParameter("@activityid", activityId);
+            dataLayer.ExecuteNonQuery();
+        }
+
+        public static void DeleteActivity(string activityId, IDataLayer dataLayer)
+        {
+            dataLayer.ConnectionString = ConfigurationManager.AppSettings["ConnectionString"].ToString();
+            dataLayer.Sql = @"delete from [dbo].[activity]
+                                WHERE id = @activityid";
+            dataLayer.AddParameter("@activityid", activityId);
             dataLayer.ExecuteNonQuery();
         }
 
@@ -111,10 +129,10 @@ namespace JoinServer.Utilities
                 activitySetttings = new ActivitySettings()
                 {
                     ActivityId = Guid.Parse(row["activityid"].ToString()),
-                    StartTime = DateTime.Parse(row["starttime"].ToString()),
-                    EndTime = DateTime.Parse(row["endtime"].ToString()),
-                    ActivityType = (ActivityTypes)int.Parse(row["activtyType"].ToString()),
-                    ActivityStatus = (ActivityStatuses)int.Parse(row["activitystatus"].ToString()),
+                    StartTime = row["starttime"].ToString(),
+                    EndTime = row["endtime"].ToString(),
+                    ActivityType = ((ActivityTypes)int.Parse(row["activtyType"].ToString())).ToString(),
+                    ActivityStatus = ((ActivityStatuses)int.Parse(row["activitystatus"].ToString())).ToString(),
                     ActivityReviews = long.Parse(row["activityreviews"].ToString()),
                     ActivityViews = long.Parse(row["activityviews"].ToString()),
                     Comments = row["comments"].ToString()
@@ -123,13 +141,13 @@ namespace JoinServer.Utilities
             return activitySetttings;
         }
 
-        public static bool IsDeviceFound(Activity activity, IDataLayer dataLayer)
-        {
-            dataLayer.ConnectionString = ConfigurationManager.AppSettings["ConnectionString"].ToString();
-            dataLayer.Sql = "select count(*) from Activity where deviceid = @deviceid";
-            dataLayer.AddParameter("@deviceid", activity.DeviceID);
-            return ((int)dataLayer.ExecuteScalar() > 0);
-        }
+        //public static bool IsDeviceFound(Activity activity, IDataLayer dataLayer)
+        //{
+        //    dataLayer.ConnectionString = ConfigurationManager.AppSettings["ConnectionString"].ToString();
+        //    dataLayer.Sql = "select count(*) from Activity where id = @activityid";
+        //    dataLayer.AddParameter("@activityid", activity.);
+        //    return ((int)dataLayer.ExecuteScalar() > 0);
+        //}
 
         public static Guid InsertActivity(Activity activity, IDataLayer dataLayer)
         {
@@ -147,15 +165,16 @@ namespace JoinServer.Utilities
             return activityId;
         }
 
-        public static void UpdateUpdateActivity(Activity activity, IDataLayer dataLayer)
+        public static void UpdateActivity(Activity activity, IDataLayer dataLayer)
         {
             dataLayer.ConnectionString = ConfigurationManager.AppSettings["ConnectionString"].ToString();
-            dataLayer.Sql = "update Activity set what = @what, [when] = @when, lat = @lat, long = @long where deviceid = @deviceid";
-            dataLayer.AddParameter("@deviceId", activity.DeviceID);
-            dataLayer.AddParameter("@What", activity.What);
+            dataLayer.Sql = "update Activity set [when] = @when, description = @description where id = @activityid";
+            dataLayer.AddParameter("@activityid", activity.ActivityID);
+            //dataLayer.AddParameter("@What", activity.What);
+            dataLayer.AddParameter("@description", activity.description);
             dataLayer.AddParameter("@when", activity.When);
-            dataLayer.AddParameter("@lat", activity.Lat);
-            dataLayer.AddParameter("@long", activity.Long);
+            //dataLayer.AddParameter("@lat", activity.Lat);
+            //dataLayer.AddParameter("@long", activity.Long);
             dataLayer.ExecuteNonQuery();
         }
 
@@ -200,26 +219,49 @@ namespace JoinServer.Utilities
             return locations;
         }
 
-        public static List<CurrentActivity> GetMyActivities(string device, IDataLayer dataLayer)
+        public static List<Activity> GetMyActivities(string device, IDataLayer dataLayer)
         {
             dataLayer.ConnectionString = ConfigurationManager.AppSettings["ConnectionString"].ToString();
-            dataLayer.Sql = @"select distinct a.deviceId, Lat, Long, what, description, imagepath, a.id, ase.activtyType, ase.starttime, ase.endtime, null as activityrequestid, null as status, AVG(pr.rating) rating from Activity a 
-								 inner join activitysettings ase on ase.activityid = a.Id and  getdate() between ase.starttime and ase.endtime
+            dataLayer.Sql = @"select distinct a.deviceId, Lat, Long, what, [when], description, imagepath, a.id, ase.activtyType, ase.starttime, ase.endtime, null as activityrequestid, null as status, AVG(pr.rating) rating from Activity a 
+								 inner join activitysettings ase on ase.activityid = a.Id and  getdate() <= ase.endtime
 								left join ProfileReviews pr on pr.deviceid = a.deviceid
 								where a.deviceid = @device
-								group by a.deviceId, Lat, Long, what, description, imagepath, a.id, ase.activtyType, ase.starttime, ase.endtime";
+								group by a.deviceId, Lat, Long, what, [when], description, imagepath, a.id, ase.activtyType, ase.starttime, ase.endtime";
             dataLayer.AddParameter("@device", device);
-            List<CurrentActivity> locations = new List<CurrentActivity>();
+            List<Activity> locations = new List<Activity>();
             foreach (DataRow row in dataLayer.ExecuteDataTable().Rows)
             {
                 if (row["status"] != DBNull.Value && (RequestStatus)int.Parse(row["status"].ToString()) == RequestStatus.REJECTED)
                 {
                     continue;
                 }
-                locations.Add(FillLocation(row));
+                locations.Add(FillMyActivities(row));
             }
 
             return locations;
+        }
+
+        private static Activity FillMyActivities(DataRow row)
+        {
+            return new Activity()
+            {
+                DeviceID = row["deviceid"].ToString(),
+                Lat = double.Parse(row["lat"].ToString()),
+                Long = double.Parse(row["long"].ToString()),
+                What = row["what"].ToString(),
+                When = row["when"].ToString(),
+                description = row["description"].ToString(),
+                ImagePath = row["imagepath"].ToString().Split('.')[0],
+                ActivityID = row["id"].ToString().Split('.')[0],
+                ActivitySetting = new ActivitySettings()
+                {
+                    ActivityType = ((ActivityTypes)int.Parse(row["activtyType"].ToString())).ToString(),
+                    StartTime = DateTime.Parse(row["starttime"].ToString()).ToString("yyyy-MM-dd HH:mm:ss"),
+                    EndTime = DateTime.Parse(row["endtime"].ToString()).ToString("yyyy-MM-dd HH:mm:ss"),
+                    ActivityStatus = ((RequestStatus)int.Parse(row["status"] == DBNull.Value ? "0" : row["status"].ToString())).ToString(),
+                    //                    ProfileRating = float.Parse(row["rating"] == DBNull.Value ? "0.0" : row["rating"].ToString())
+                },
+            };
         }
 
         private static CurrentActivity FillLocation(DataRow row)
@@ -261,7 +303,7 @@ namespace JoinServer.Utilities
             foundLongitude = new_x + x0;
             foundLatitude = y + y0;
         }
-        
+
         // PUT api/values/5
         public static CurrentActivity GetLocationByActivityId(string activityId, IDataLayer dataLayer)
         {
@@ -288,6 +330,52 @@ namespace JoinServer.Utilities
                 };
             }
             return location;
+        }
+
+        public static List<Profile> GetActivitySubscribers(string activityId, IDataLayer dataLayer)
+        {
+            dataLayer.ConnectionString = ConfigurationManager.AppSettings["ConnectionString"].ToString();
+            dataLayer.Sql = @"select a.deviceid, p.username, p.profilename, p.about, p.hobies, p.views, count(pr.deviceid) reviews, AVG(pr.rating) rating
+                                    from Activity a inner join activityrequests ar on ar.activityid = a.Id and ar.status=4
+									 left join  profile p on p.deviceid = ar.requestfrom left join ProfileReviews pr on pr.deviceid = p.deviceid 
+									where a.Id=@activityid and p.username is not null
+                                    group by pr.deviceid, a.deviceid, p.username, p.profilename, p.about, p.hobies, p.views";
+            dataLayer.AddParameter("@activityid", activityId);
+            List<Profile> profiles = new List<Profile>();
+            DataTable dataTable = dataLayer.ExecuteDataTable();
+            foreach (DataRow row in dataTable.Rows)
+            {
+                profiles.Add(new Profile()
+                {
+                    DeviceID = (string)row["deviceid"],
+                    UserName = (string)row["username"],
+                    ProfileName = (string)row["profilename"],
+                    Hobies = (string)row["hobies"],
+                    About = (string)row["about"],
+                    Rating = row["rating"] == DBNull.Value ? 0 : float.Parse(row["rating"].ToString()),
+                    Reviews = long.Parse(row["reviews"].ToString()),
+                    views = long.Parse(row["views"].ToString())
+                });
+            }
+            return profiles;
+        }
+
+
+        public static List<string> GetTokensToNotify(string activityId, IDataLayer dataLayer)
+        {
+            dataLayer.ConnectionString = ConfigurationManager.AppSettings["ConnectionString"].ToString();
+            dataLayer.Sql = @"select d.NotificationToken
+                                    from Activity a inner join activityrequests ar on ar.activityid = a.Id and ar.status=4
+									 inner join Devices d on d.DeviceId = ar.requestfrom
+									where a.Id=@activityid";
+            dataLayer.AddParameter("@activityid", activityId);
+            List<string> tokens = new List<string>();
+            DataTable dataTable = dataLayer.ExecuteDataTable();
+            foreach (DataRow row in dataTable.Rows)
+            {
+                tokens.Add(row["NotificationToken"].ToString());
+            }
+            return tokens;
         }
 
     }

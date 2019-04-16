@@ -84,6 +84,23 @@ namespace JoinServer.Utilities
             }
         }
 
+        public static bool DeleteActivityRequests(string activityId, IDataLayer dataLayer)
+        {
+            try
+            {
+                dataLayer.ConnectionString = ConfigurationManager.AppSettings["ConnectionString"].ToString();
+                dataLayer.Sql = @"delete from activityrequests where activityrequestid=@activityrequestid";
+                dataLayer.AddParameter("@activityid", activityId);
+                 dataLayer.ExecuteNonQuery();
+                return true;
+            }
+            catch (Exception ex)
+            {
+                dataLayer.RollbackTransaction();
+                return false;
+            }
+        }
+
         private static ActivityRequest GetRequestIfExists(ActivityRequest activityRequest, IDataLayer dataLayer)
         {
             ActivityRequest existingRequest = null;

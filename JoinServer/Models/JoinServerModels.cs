@@ -37,35 +37,21 @@ namespace JoinServer.Models
 
     public class Activity
     {
-        [Required]
-        [DataType(DataType.Password)]
-        [Display(Name = "Device Id")]
+        public string ActivityID { get; set; }
+
         public string DeviceID { get; set; }
 
-        [Required]
-        [DataType(DataType.Password)]
-        [Display(Name = "what")]
         public string What { get; set; }
 
-        [Required]
-        [DataType(DataType.Password)]
-        [Display(Name = "When")]
-        public DateTime When { get; set; }
+        public string When { get; set; }
 
-        [Required]
-        [DataType(DataType.Password)]
-        [Display(Name = "Lat")]
         public double Lat { get; set; }
 
-        [Required]
-        [DataType(DataType.Password)]
-        [Display(Name = "Long")]
         public double Long { get; set; }
 
-        [Required]
-        [DataType(DataType.Password)]
-        [Display(Name = "description")]
         public string description { get; set; }
+
+        public string ImagePath { get; set; }
 
         public ActivitySettings ActivitySetting { get; set; }
     }
@@ -111,13 +97,13 @@ namespace JoinServer.Models
     {
         public Guid ActivityId { get; set; }
 
-        public DateTime StartTime { get; set; }
+        public string StartTime { get; set; }
 
-        public DateTime EndTime { get; set; }
+        public string EndTime { get; set; }
 
-        public ActivityTypes ActivityType { get; set; }
+        public string ActivityType { get; set; }
 
-        public ActivityStatuses ActivityStatus { get; set; }
+        public string ActivityStatus { get; set; }
 
         public long ActivityReviews { get; set; }
 

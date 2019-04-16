@@ -27,23 +27,7 @@ namespace JoinServer.Controllers
         {
             using (IDataLayer dataLayer = DataLayer.GetInstance(DatabaseTypes.MSSql, false))
             {
-                try
-                {
-                    dataLayer.BeginTransaction();
-                    //Activity activity = JsonConvert.DeserializeObject<Activity>(value);
-                    Guid activityId = ActivityHelper.InsertActivity(activity, dataLayer);
-                    if (activity.ActivitySetting != null)
-                    {
-                        activity.ActivitySetting.ActivityId = activityId;
-                        ActivityHelper.InsertActivitySettings(activity.ActivitySetting, dataLayer);
-                    }
-                    dataLayer.CommitTransaction();
-                }
-                catch (Exception ex)
-                {
-                    dataLayer.RollbackTransaction();
-                    return null;
-                }
+                postActivity(activity, dataLayer);
             }
 
             return activity;
@@ -88,9 +72,9 @@ namespace JoinServer.Controllers
         }
 
         [Route("MyActivities/{device}")]
-        public List<CurrentActivity> GetMyActivities([FromUri] string device)
+        public List<Activity> GetMyActivities([FromUri] string device)
         {
-            List<CurrentActivity> locations = null;
+            List<Activity> locations = null;
             try
             {
                 //Activity activity = JsonConvert.DeserializeObject<Activity>(value);
@@ -125,29 +109,122 @@ namespace JoinServer.Controllers
             return location;
         }
 
-        private static void PutAnActivity(Activity activity)
+        [Route("ActivityById/{activityid}/Subscribers")]
+        public List<Profile> GetActivitySubscribers([FromUri] string activityId)
+        {
+            List<Profile> profiles = null;
+            try
+            {
+                //Activity activity = JsonConvert.DeserializeObject<Activity>(value);
+                using (IDataLayer dataLayer = DataLayer.GetInstance(DatabaseTypes.MSSql, false))
+                {
+                    profiles = ActivityHelper.GetActivitySubscribers(activityId, dataLayer);
+                }
+            }
+            catch (Exception ex)
+            {
+
+            }
+            return profiles;
+        }
+
+        [Route("Activity")]
+        public Activity PutActivity(Activity activity)
         {
             using (IDataLayer dataLayer = DataLayer.GetInstance(DatabaseTypes.MSSql, false))
             {
-                //if (!IsDeviceFound(activity, dataLayer))
-                //{
-                ActivityHelper.InsertActivity(activity, dataLayer);
-                //}
-                //else
-                //{
-                //    UpdateUpdateActivity(activity, dataLayer);
+                if (!ActivityHelper.IsActivityFound(activity.ActivityID, dataLayer))
+                {
+                    return postActivity(activity, dataLayer);
+                }
+                else
+                {
+                    try
+                    {
+                        dataLayer.BeginTransaction();
+                        ActivityHelper.UpdateActivity(activity, dataLayer);
+                        ActivityHelper.UpdateMinActivitySettings(activity.ActivitySetting, dataLayer);
+                        dataLayer.CommitTransaction();
+                        SendUpdateNotifications(activity.ActivityID, dataLayer);
+                    }
+                    catch (Exception ex)
+                    {
+                        dataLayer.RollbackTransaction();
+                        return null;
+                    }
 
-                //}
+                }
+                return activity;
             }
         }
 
-        public void Put(int id, [FromBody]string value)
-        {
-        }
+
 
         // DELETE api/values/5
-        public void Delete(int id)
+        [Route("Activity/{activityid}")]
+        public void DeleteActivity(string activityId)
         {
+            using (IDataLayer dataLayer = DataLayer.GetInstance(DatabaseTypes.MSSql, false))
+            {
+                try
+                {
+                    SendDeleteNotifications(activityId, dataLayer);
+                    dataLayer.BeginTransaction();
+                    ActivityRequestHelper.DeleteActivityRequests(activityId, dataLayer);
+                    ActivityHelper.DeleteActivitySettings(activityId, dataLayer);
+                    ActivityHelper.DeleteActivity(activityId, dataLayer);
+                    dataLayer.CommitTransaction();
+                }
+                catch (Exception ex)
+                {
+                    dataLayer.RollbackTransaction();
+                    throw ex;
+                }
+            }
         }
+
+        private static void SendDeleteNotifications(string activityId, IDataLayer dataLayer)
+        {
+            List<string> tokens = ActivityHelper.GetTokensToNotify(activityId, dataLayer);
+            if (tokens.Count > 0)
+            {
+                Activity activity = ActivityHelper.GetActivity(activityId, dataLayer);
+                NotificationsHelper.SendNotification(tokens.ToArray(), "Activity Update", $"{activity.What} has been deleted", activity);
+            }
+        }
+
+        private static void SendUpdateNotifications(string activityId, IDataLayer dataLayer)
+        {
+            List<string> tokens = ActivityHelper.GetTokensToNotify(activityId, dataLayer);
+            if (tokens.Count > 0)
+            {
+                Activity activity = ActivityHelper.GetActivity(activityId, dataLayer);
+                NotificationsHelper.SendNotification(tokens.ToArray(), "Activity Update", $"{activity.What} has been updated", activity);
+            }
+        }
+
+        private Activity postActivity(Activity activity, IDataLayer dataLayer)
+        {
+            try
+            {
+                dataLayer.BeginTransaction();
+                //Activity activity = JsonConvert.DeserializeObject<Activity>(value);
+                Guid activityId = ActivityHelper.InsertActivity(activity, dataLayer);
+                activity.ActivityID = activityId.ToString();
+                if (activity.ActivitySetting != null)
+                {
+                    activity.ActivitySetting.ActivityId = activityId;
+                    ActivityHelper.InsertActivitySettings(activity.ActivitySetting, dataLayer);
+                }
+                dataLayer.CommitTransaction();
+            }
+            catch (Exception ex)
+            {
+                dataLayer.RollbackTransaction();
+                return null;
+            }
+            return activity;
+        }
+
     }
 }

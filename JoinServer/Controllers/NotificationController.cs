@@ -30,6 +30,11 @@ namespace JoinServer.Controllers
         [Route("Notification")]
         public void Post([FromBody] NotificationRequest notificationRequest)
         {
+            SendNotifications(notificationRequest);
+        }
+
+        private void SendNotifications(NotificationRequest notificationRequest)
+        {
             Activity activity = null;
             Device toDevice = null;
             Device fromDevice = null;
@@ -95,10 +100,10 @@ namespace JoinServer.Controllers
                     //sendStatus.Wait();
                     //if (sendStatus.Result)
                     //{
-                        using (IDataLayer dataLayer = DataLayer.GetInstance(DatabaseTypes.MSSql, false))
-                        {
-                            ActivityRequestHelper.HandleRequestChange(request, dataLayer);
-                        }
+                    using (IDataLayer dataLayer = DataLayer.GetInstance(DatabaseTypes.MSSql, false))
+                    {
+                        ActivityRequestHelper.HandleRequestChange(request, dataLayer);
+                    }
                     //}
 
                 }
