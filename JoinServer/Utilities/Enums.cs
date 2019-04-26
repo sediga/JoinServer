@@ -39,4 +39,11 @@ namespace JoinServer.Utilities
         ONHOLD = 4,
         RESUMED = 5
     }
+
+    public enum MessageStatuses
+    {
+        NEW = 0,
+        PENDING = 1,
+        ACTED = 2
+    }
 }

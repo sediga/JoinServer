@@ -244,6 +244,7 @@
     <Compile Include="Controllers\ProfileImageController.cs" />
     <Compile Include="Controllers\NotificationController.cs" />
     <Compile Include="Controllers\ProfileReviewController.cs" />
+    <Compile Include="Models\Notification.cs" />
     <Compile Include="Models\Device.cs" />
     <Compile Include="Controllers\DeviceController.cs" />
     <Compile Include="Controllers\ImageController.cs" />

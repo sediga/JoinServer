@@ -323,18 +323,25 @@ namespace JoinServer.Controllers
         [Route("Register")]
         public async Task<IHttpActionResult> Register(RegisterBindingModel model)
         {
-            if (!ModelState.IsValid)
+            try
             {
-                return BadRequest(ModelState);
+                if (!ModelState.IsValid)
+                {
+                    return BadRequest(ModelState);
+                }
+
+                var user = new ApplicationUser() { UserName = model.Email, Email = model.Email };
+
+                IdentityResult result = await UserManager.CreateAsync(user, model.Password);
+
+                if (!result.Succeeded)
+                {
+                    return GetErrorResult(result);
+                }
             }
-
-            var user = new ApplicationUser() { UserName = model.Email, Email = model.Email };
-
-            IdentityResult result = await UserManager.CreateAsync(user, model.Password);
-
-            if (!result.Succeeded)
+            catch (Exception ex)
             {
-                return GetErrorResult(result);
+                return InternalServerError(ex);
             }
 
             return Ok();

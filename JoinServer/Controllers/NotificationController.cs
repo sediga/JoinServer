@@ -33,6 +33,15 @@ namespace JoinServer.Controllers
             SendNotifications(notificationRequest);
         }
 
+        [Route("Notification/{deviceid}")]
+        public List<NotificationDetails> GetNotificationsForDevice([FromUri] string deviceId)
+        {
+            using (IDataLayer dataLayer = DataLayer.GetInstance(DatabaseTypes.MSSql, false))
+            {
+                return NotificationsHelper.GetMyNotifications(deviceId, dataLayer);
+            }
+        }
+
         private void SendNotifications(NotificationRequest notificationRequest)
         {
             Activity activity = null;
@@ -96,16 +105,35 @@ namespace JoinServer.Controllers
                             }
                             break;
                     }
-                    Task<bool> sendStatus = NotificationsHelper.SendNotification(devices, title, body, notificationRequest);
+
+                    string notificationId = Guid.NewGuid().ToString();
+                    NotificationDetails notificationDetails = new NotificationDetails()
+                    {
+                        CreatedOn = DateTime.Now,
+                        ActivityId = activity.ActivityID,
+                        DeviceId = toDevice.DeviceID,
+                        UpdatedOn = DateTime.Now,
+                        Dismissed = false,
+                        NotificationText = body,
+                        MessageObject = notificationRequest,
+                        MessageStatus = MessageStatuses.NEW,
+                        NotificationId = notificationId
+                    };
+                    notificationRequest.NotificationId = notificationId;
                     //sendStatus.Wait();
                     //if (sendStatus.Result)
                     //{
+                    bool isHandleRequestChangeSuccessfull = false;
                     using (IDataLayer dataLayer = DataLayer.GetInstance(DatabaseTypes.MSSql, false))
                     {
-                        ActivityRequestHelper.HandleRequestChange(request, dataLayer);
+                        isHandleRequestChangeSuccessfull = ActivityRequestHelper.HandleRequestChange(request, notificationDetails, dataLayer);
+                       // NotificationsHelper.InsertNotification(notificationDetails, dataLayer);
                     }
                     //}
-
+                    if (isHandleRequestChangeSuccessfull)
+                    {
+                        Task<bool> sendStatus = NotificationsHelper.SendNotification(devices, title, body, notificationRequest);
+                    }
                 }
             }
             catch (Exception ex)
@@ -114,13 +142,25 @@ namespace JoinServer.Controllers
         }
 
         // PUT: api/Notification/5
-        public void Put(int id, [FromBody]string value)
+        [Route("Notification/{notificationid}")]
+        public void Put([FromUri] string notificationId, [FromBody] NotificationRequest notificationRequest)
         {
         }
 
         // DELETE: api/Notification/5
-        public void Delete(int id)
+        [Route("Notification/{notificationid}")]
+        public void Delete([FromUri] string notificationId)
         {
+            try
+            {
+                using (IDataLayer dataLayer = DataLayer.GetInstance(DatabaseTypes.MSSql, false))
+                {
+                    NotificationsHelper.UpdateNotificationStatus(notificationId, MessageStatuses.ACTED, dataLayer);
+                }
+            }catch(Exception ex)
+            {
+                
+            }
         }
 
         private Device Getdevice(string deviceId, IDataLayer dataLayer)

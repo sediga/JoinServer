@@ -185,21 +185,65 @@ namespace JoinServer.Controllers
 
         private static void SendDeleteNotifications(string activityId, IDataLayer dataLayer)
         {
-            List<string> tokens = ActivityHelper.GetTokensToNotify(activityId, dataLayer);
-            if (tokens.Count > 0)
+            List<Device> devices = ActivityHelper.GetDevicesToNotify(activityId, dataLayer);
+            if (devices.Count > 0)
             {
                 Activity activity = ActivityHelper.GetActivity(activityId, dataLayer);
-                NotificationsHelper.SendNotification(tokens.ToArray(), "Activity Update", $"{activity.What} has been deleted", activity);
+                List<string> tokens = new List<string>();
+                string title = "Activity Deleted";
+                string message = $"'{activity.What}' has been deleted";
+                foreach (Device device in devices)
+                {
+                    tokens.Add(device.NotificationToken);
+                    NotificationDetails notificationDetails = SaveNotification(device, message, activity, activityId, dataLayer);
+                    ActivityRequest request = ActivityRequestHelper.GetRequestIfExists(activityId, activity.DeviceID, device.DeviceID, dataLayer);
+                    request.RequestStatus = RequestStatus.CANCELLED;
+                    request.RequestStatusChangeDate = DateTime.Now;
+                    ActivityRequestHelper.UpdateExistingRequest(request, dataLayer);
+                }
+                NotificationsHelper.SendNotification(tokens.ToArray(), title, message, activity);
             }
+        }
+
+        private static NotificationDetails SaveNotification(Device device, string body, object messageObject, string activityId, IDataLayer dataLayer)
+        {
+            string notificationId = Guid.NewGuid().ToString();
+            NotificationDetails notificationDetails = new NotificationDetails()
+            {
+                CreatedOn = DateTime.Now,
+                DeviceId = device.DeviceID,
+                ActivityId = activityId,
+                UpdatedOn = DateTime.Now,
+                Dismissed = false,
+                NotificationText = body,
+                MessageObject = messageObject,
+                MessageStatus = MessageStatuses.NEW,
+                NotificationId = notificationId
+            };
+
+            //sendStatus.Wait();
+            //if (sendStatus.Result)
+            //{
+            NotificationsHelper.InsertNotification(notificationDetails, dataLayer);
+
+            return notificationDetails;
         }
 
         private static void SendUpdateNotifications(string activityId, IDataLayer dataLayer)
         {
-            List<string> tokens = ActivityHelper.GetTokensToNotify(activityId, dataLayer);
-            if (tokens.Count > 0)
+            List<Device> devices = ActivityHelper.GetDevicesToNotify(activityId, dataLayer);
+            if (devices.Count > 0)
             {
                 Activity activity = ActivityHelper.GetActivity(activityId, dataLayer);
-                NotificationsHelper.SendNotification(tokens.ToArray(), "Activity Update", $"{activity.What} has been updated", activity);
+                List<string> tokens = new List<string>();
+                string title = "Activity Updated";
+                string message = $"'{activity.What}' has been updated";
+                foreach (Device device in devices)
+                {
+                    tokens.Add(device.NotificationToken);
+                    SaveNotification(device, message, activity, activityId, dataLayer);
+                }
+                NotificationsHelper.SendNotification(tokens.ToArray(), title, message, activity);
             }
         }
 

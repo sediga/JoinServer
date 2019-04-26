@@ -13,13 +13,14 @@ namespace JoinServer.Utilities
         {
             Activity activity = null;
             dataLayer.ConnectionString = ConfigurationManager.AppSettings["ConnectionString"].ToString();
-            dataLayer.Sql = @"select deviceId, what, [when] activityTime, description, lat, long, imagepath from activity where id=@activityid";
+            dataLayer.Sql = @"select id, deviceId, what, [when] activityTime, description, lat, long, imagepath from activity where id=@activityid";
             dataLayer.AddParameter("@activityid", activityId);
             DataTable table = dataLayer.ExecuteDataTable();
             if (table.Rows != null && table.Rows.Count > 0)
             {
                 activity = new Activity()
                 {
+                    ActivityID = table.Rows[0]["id"].ToString(),
                     description = table.Rows[0]["description"].ToString(),
                     DeviceID = table.Rows[0]["deviceId"].ToString(),
                     What = table.Rows[0]["what"].ToString(),
@@ -187,7 +188,7 @@ namespace JoinServer.Utilities
 								 inner join activitysettings ase on ase.activityid = a.Id and  getdate() between ase.starttime and ase.endtime
 								left join activityrequests ar on ar.requestfrom = @device and ar.activityid = a.Id
 								left join ProfileReviews pr on pr.deviceid = a.deviceid
-								where lat between @bottomLat and @topLat and long between @leftLng and @rightLng
+								where lat between @bottomLat and @topLat and long between @leftLng and @rightLng and a.deviceid = @device
 								group by a.deviceId, Lat, Long, what, description, imagepath, a.id, ase.activtyType, ase.starttime, ase.endtime, ar.activityrequestid, ar.status";
                 dataLayer.AddParameter("@device", device);
             }
@@ -197,7 +198,7 @@ namespace JoinServer.Utilities
 								on ase.activityid = a.Id and  getdate() between ase.starttime and ase.endtime
 								left join activityrequests ar on ar.requestfrom = @device and ar.activityid = a.Id
 								left join ProfileReviews pr on pr.deviceid = a.deviceid
-                                 where what like '%'+@activity+'%' and lat between @bottomLat and @topLat and long between @leftLng and @rightLng
+                                 where what like '%'+@activity+'%' and lat between @bottomLat and @topLat and long between @leftLng and @rightLng and a.deviceid = @device
 								 group by a.deviceId, Lat, Long, what, description, imagepath, a.id, ase.activtyType, ase.starttime, ase.endtime, ar.activityrequestid, ar.status";
                 dataLayer.AddParameter("@device", device);
                 dataLayer.AddParameter("@activity", activity);
@@ -361,21 +362,27 @@ namespace JoinServer.Utilities
         }
 
 
-        public static List<string> GetTokensToNotify(string activityId, IDataLayer dataLayer)
+        public static List<Device> GetDevicesToNotify(string activityId, IDataLayer dataLayer)
         {
             dataLayer.ConnectionString = ConfigurationManager.AppSettings["ConnectionString"].ToString();
-            dataLayer.Sql = @"select d.NotificationToken
+            dataLayer.Sql = @"select d.deviceid, d.emailid, d.softwareversion, d.NotificationToken
                                     from Activity a inner join activityrequests ar on ar.activityid = a.Id and ar.status=4
 									 inner join Devices d on d.DeviceId = ar.requestfrom
 									where a.Id=@activityid";
             dataLayer.AddParameter("@activityid", activityId);
-            List<string> tokens = new List<string>();
+            List<Device> devices = new List<Device>();
             DataTable dataTable = dataLayer.ExecuteDataTable();
             foreach (DataRow row in dataTable.Rows)
             {
-                tokens.Add(row["NotificationToken"].ToString());
+                devices.Add(new Device()
+                {
+                    DeviceID = row["deviceid"].ToString(),
+                    EmailID = row["emailid"].ToString(),
+                    SoftwareVersion = row["softwareversion"].ToString(),
+                    NotificationToken = row["NotificationToken"].ToString()
+                });
             }
-            return tokens;
+            return devices;
         }
 
     }

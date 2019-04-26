@@ -10,6 +10,8 @@ namespace JoinServer.Models
 {
     public class NotificationRequest
     {
+        public string NotificationId { get; set; }
+
         public string FromDeviceId { get; set; }
 
         public string ToDeviceId { get; set; }

@@ -15,9 +15,11 @@ namespace JoinServer.Utilities
         {
             try
             {
+                activityRequest.ActivityRequestId = Guid.NewGuid();
                 dataLayer.ConnectionString = ConfigurationManager.AppSettings["ConnectionString"].ToString();
-                dataLayer.Sql = @"INSERT INTO [dbo].[activityrequests] ([requestfrom], [requestto], [requestdate], [status], [activityid], [changedate], [reqesttype])
-                                    values(@requestfrom, @requestto, @requestdate, @status, @activityid, @changedate, @reqesttype)";
+                dataLayer.Sql = @"INSERT INTO [dbo].[activityrequests] ([activityrequestid], [requestfrom], [requestto], [requestdate], [status], [activityid], [changedate], [reqesttype])
+                                    values(@activityrequestid, @requestfrom, @requestto, @requestdate, @status, @activityid, @changedate, @reqesttype);SELECT SCOPE_IDENTITY();";
+                dataLayer.AddParameter("@activityrequestid", activityRequest.ActivityRequestId);
                 dataLayer.AddParameter("@requestfrom", activityRequest.RequestFrom);
                 dataLayer.AddParameter("@requestto", activityRequest.RequestTo);
                 dataLayer.AddParameter("@requestdate", activityRequest.RequestDate);
@@ -34,23 +36,44 @@ namespace JoinServer.Utilities
             }
         }
 
-        public static bool HandleRequestChange(ActivityRequest activityRequest, IDataLayer dataLayer)
+        public static bool HandleRequestChange(ActivityRequest activityRequest, NotificationDetails notificationDetails, IDataLayer dataLayer)
         {
             try
             {
                 ActivityRequest existingRequest = null;
                 if (activityRequest != null)
                 {
-                    existingRequest = GetRequestIfExists(activityRequest, dataLayer);
+                    existingRequest = GetRequestIfExists(activityRequest.ActivityId, activityRequest.RequestFrom, activityRequest.RequestTo, dataLayer);
                 }
                 if (existingRequest == null)
                 {
                     AddRequest(activityRequest, dataLayer);
+                    notificationDetails.RequestId = activityRequest.ActivityRequestId.ToString();
+                    NotificationsHelper.InsertNotification(notificationDetails, dataLayer);
                 }
                 else
                 {
-                    activityRequest.ActivityRequestId = existingRequest.ActivityRequestId;
-                    UpdateExistingRequest(activityRequest, dataLayer);
+                    List<NotificationDetails> notifications = NotificationsHelper.GetNotificationsByRequestId(existingRequest.ActivityRequestId.ToString(), dataLayer);
+                    if (notifications.Count > 0)
+                    {
+                        foreach (NotificationDetails notification in notifications)
+                        {
+                            NotificationsHelper.UpdateNotificationStatus(notification.NotificationId, MessageStatuses.ACTED, dataLayer);
+                        }
+                    }
+                    if (!(existingRequest.RequestFrom == activityRequest.RequestFrom &&
+                            existingRequest.RequestTo == activityRequest.RequestTo &&
+                            existingRequest.RequestType == activityRequest.RequestType &&
+                            existingRequest.RequestStatus == activityRequest.RequestStatus))
+                    {
+                        activityRequest.ActivityRequestId = existingRequest.ActivityRequestId;
+                        UpdateExistingRequest(activityRequest, dataLayer);
+                        NotificationsHelper.InsertNotification(notificationDetails, dataLayer);
+                    }
+                    else
+                    {
+                        return false;
+                    }
                 }
                 return true;
             }
@@ -60,7 +83,7 @@ namespace JoinServer.Utilities
             }
         }
 
-        private static bool UpdateExistingRequest(ActivityRequest activityRequest, IDataLayer dataLayer)
+        public static bool UpdateExistingRequest(ActivityRequest activityRequest, IDataLayer dataLayer)
         {
             try
             {
@@ -101,7 +124,7 @@ namespace JoinServer.Utilities
             }
         }
 
-        private static ActivityRequest GetRequestIfExists(ActivityRequest activityRequest, IDataLayer dataLayer)
+        public static ActivityRequest GetRequestIfExists(string activityId, string requestFrom, string requestTo, IDataLayer dataLayer)
         {
             ActivityRequest existingRequest = null;
             try
@@ -109,9 +132,9 @@ namespace JoinServer.Utilities
                 dataLayer.ConnectionString = ConfigurationManager.AppSettings["ConnectionString"].ToString();
                 dataLayer.Sql = @"SELECT [activityrequestid], [requestfrom], [requestto], [requestdate], [status], [activityid], [changedate], [reqesttype] FROM [dbo].[activityrequests]
                                     where activityid=@activityid and requestfrom = @requestfrom and requestto = @requestto";
-                dataLayer.AddParameter("@activityid", activityRequest.ActivityId);
-                dataLayer.AddParameter("@requestfrom", activityRequest.RequestFrom);
-                dataLayer.AddParameter("@requestto", activityRequest.RequestTo);
+                dataLayer.AddParameter("@activityid", activityId);
+                dataLayer.AddParameter("@requestfrom", requestFrom);
+                dataLayer.AddParameter("@requestto", requestTo);
                 DataTable table = dataLayer.ExecuteDataTable();
                 if (table.Rows != null && table.Rows.Count > 0)
                 {
