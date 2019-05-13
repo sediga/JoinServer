@@ -64,10 +64,11 @@ namespace JoinServer.Utilities
                     if (!(existingRequest.RequestFrom == activityRequest.RequestFrom &&
                             existingRequest.RequestTo == activityRequest.RequestTo &&
                             existingRequest.RequestType == activityRequest.RequestType &&
-                            existingRequest.RequestStatus == activityRequest.RequestStatus))
+                            existingRequest.RequestStatus >= activityRequest.RequestStatus))
                     {
                         activityRequest.ActivityRequestId = existingRequest.ActivityRequestId;
                         UpdateExistingRequest(activityRequest, dataLayer);
+                        notificationDetails.RequestId = existingRequest.ActivityRequestId.ToString();
                         NotificationsHelper.InsertNotification(notificationDetails, dataLayer);
                     }
                     else

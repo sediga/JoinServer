@@ -161,8 +161,6 @@ namespace JoinServer.Utilities
             }
             dataLayer.AddParameter("@updatedon", DateTime.Now);
             dataLayer.AddParameter("@notificationid", notificationId);
-            //dataLayer.AddParameter("@lat", activity.Lat);
-            //dataLayer.AddParameter("@long", activity.Long);
             dataLayer.ExecuteNonQuery();
         }
 
@@ -173,8 +171,6 @@ namespace JoinServer.Utilities
             dataLayer.AddParameter("@messagestatus", messageStatus);
             dataLayer.AddParameter("@updatedon", DateTime.Now);
             dataLayer.AddParameter("@requestid", requestId);
-            //dataLayer.AddParameter("@lat", activity.Lat);
-            //dataLayer.AddParameter("@long", activity.Long);
             dataLayer.ExecuteNonQuery();
         }
 

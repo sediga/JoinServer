@@ -42,6 +42,15 @@ namespace JoinServer.Controllers
             }
         }
 
+        [Route("Notification/{activityId}/{fromdeviceid}/{todeviceid}")]
+        public ActivityRequest GetNotificationsForDevice([FromUri] string activityId, [FromUri] string fromDeviceId, [FromUri] string toDeviceId)
+        {
+            using (IDataLayer dataLayer = DataLayer.GetInstance(DatabaseTypes.MSSql, false))
+            {
+                return ActivityRequestHelper.GetRequestIfExists(activityId, fromDeviceId, toDeviceId, dataLayer);
+            }
+        }
+
         private void SendNotifications(NotificationRequest notificationRequest)
         {
             Activity activity = null;

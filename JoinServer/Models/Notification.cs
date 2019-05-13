@@ -1,6 +1,6 @@
 ﻿using JoinServer.Utilities;
 using System;
-
+using System.Runtime.Serialization;
 
 namespace JoinServer.Models
 {
