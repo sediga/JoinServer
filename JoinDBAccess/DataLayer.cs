@@ -197,18 +197,18 @@ namespace DataAccessLayer
                         dal = new DataLayerOracle();
                     break;
 #endif
-#if (ALL || SQLSERVERCE)
-                case DatabaseTypes.SqlServerCE:
-                    if (singleton)
-                    {
-                        GenericSingleton<DataLayerSqlServerCe> gsSqlCe = new GenericSingleton<DataLayerSqlServerCe>();
-                        dal = gsSqlCe.Instance;
-                        _isNewInstance = gsSqlCe.IsNewInstance;
-                    }
-                    else
-                        dal = new DataLayerSqlServerCe();
-                    break;
-#endif
+//#if (ALL || SQLSERVERCE)
+//                case DatabaseTypes.SqlServerCE:
+//                    if (singleton)
+//                    {
+//                        GenericSingleton<DataLayerSqlServerCe> gsSqlCe = new GenericSingleton<DataLayerSqlServerCe>();
+//                        dal = gsSqlCe.Instance;
+//                        _isNewInstance = gsSqlCe.IsNewInstance;
+//                    }
+//                    else
+//                        dal = new DataLayerSqlServerCe();
+//                    break;
+//#endif
 #if (ALL || OLEDB)
                 case DatabaseTypes.OleDB:
                     if (singleton)

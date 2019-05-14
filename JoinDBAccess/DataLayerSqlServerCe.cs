@@ -3,6 +3,7 @@ using System.Data;
 using System.Data.SqlServerCe;
 using System.Data.Common;
 using System;
+using System.Data.SqlClient;
 
 namespace DataAccessLayer
 {
@@ -15,7 +16,7 @@ namespace DataAccessLayer
         /// Initializes a new instance of the DataLayerSqlServerCe class.
         /// </summary>
         public DataLayerSqlServerCe()
-            : base(DatabaseTypes.SqlServerCE, new SqlCeConnection(), "@"
+            : base(DatabaseTypes.MSSql, new SqlConnection(), "@"
             , new ConnectionParameterNames(string.Empty, string.Empty, "Data Source", string.Empty, "Password"))
         {       }
 

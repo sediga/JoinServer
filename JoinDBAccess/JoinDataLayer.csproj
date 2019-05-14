@@ -128,7 +128,6 @@
       <SubType>Code</SubType>
     </Compile>
     <Compile Include="DataLayerSqLite.cs" />
-    <Compile Include="DataLayerSqlServerCe.cs" />
     <Compile Include="DBConnectionString.cs" />
     <Compile Include="DataLayerMsSQL.cs" />
     <Compile Include="DataLayerBase.cs" />
