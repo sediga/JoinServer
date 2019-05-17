@@ -7,6 +7,7 @@ using System.IO;
 using System.Net;
 using System.Net.Http;
 using System.Net.Http.Headers;
+using System.Web.Hosting;
 using System.Web.Http;
 
 namespace JoinServer.Controllers
@@ -26,8 +27,7 @@ namespace JoinServer.Controllers
                 {
                     profileImagePath = GetProfileImagePath(deviceId, dataLayer);
                 }
-
-                Image image = Image.FromFile(ConfigurationManager.AppSettings["ProfileImagesPath"] + profileImagePath);
+                Image image = Image.FromFile(HostingEnvironment.MapPath("~") + ConfigurationManager.AppSettings["ProfileImagesPath"] + profileImagePath);
                 using (MemoryStream ms = new MemoryStream())
                 {
                     image.Save(ms, System.Drawing.Imaging.ImageFormat.Png);
@@ -63,7 +63,7 @@ namespace JoinServer.Controllers
                                     foreach (HttpContent content in provider.Contents)
                                     {
                                         string fileName = Guid.NewGuid() + ".jpeg";
-                                        string fileFolder = ConfigurationManager.AppSettings["ProfileImagesPath"] + $"{deviceId}\\";
+                                        string fileFolder = HostingEnvironment.MapPath("~") + ConfigurationManager.AppSettings["ProfileImagesPath"] + $"{deviceId}\\";
                                         if (!Directory.Exists(fileFolder))
                                         {
                                             Directory.CreateDirectory(fileFolder);
